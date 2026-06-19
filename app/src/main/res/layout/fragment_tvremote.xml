@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_back_to_home"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/ripple_circle"
+            android:contentDescription="@string/nav_back"
+            android:scaleType="centerInside"
+            android:src="@drawable/baseline_arrow_back_24"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/home_tvremote_title"
+            android:textAppearance="?attr/textAppearanceTitleLarge"
+            android:textColor="?attr/colorOnSurface" />
+    </LinearLayout>
+
+    <!-- Content area -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="top"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="40dp"
+            app:cardBackgroundColor="@color/home_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/outline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="20dp">
+
+                <!-- Top row: LED + Power -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- LED indicator -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <View
+                            android:id="@+id/led_indicator"
+                            android:layout_width="12dp"
+                            android:layout_height="12dp"
+                            android:background="@drawable/bg_led_dot" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/tvremote_led_label"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
+                    <!-- Power button -->
+                    <ImageButton
+                        android:id="@+id/btn_power"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:background="@drawable/bg_remote_button_small_ripple"
+                        android:contentDescription="@string/tvremote_power"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/baseline_power_settings_new_24"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
+
+                <com.haoze.claudekeyboard.ui.tvremote.CircularDpadView
+                    android:id="@+id/circular_dpad"
+                    android:layout_width="212dp"
+                    android:layout_height="212dp"
+                    android:layout_marginTop="20dp"
+                    app:outerRadius="106dp"
+                    app:innerRadius="51dp"
+                    app:repeatDelay="200"
+                    app:ringColor="@color/home_card"
+                    app:ringBorderColor="@color/primary"
+                    app:centerColor="@color/home_card"
+                    app:centerBorderColor="@color/primary"
+                    app:dividerColor="@color/primary"
+                    app:iconColor="@color/primary" />
+
+                <!-- Back + Assistant row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="90dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/btn_back"
+                        android:layout_width="130dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/bg_capsule_button"
+                        android:contentDescription="@string/tvremote_back"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_tv_icon_nav"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_arrow_back"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/tvremote_back"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="28dp"
+                        android:layout_height="0dp" />
+
+                    <LinearLayout
+                        android:id="@+id/btn_assistant"
+                        android:layout_width="130dp"
+                        android:layout_height="52dp"
+                        android:background="@drawable/bg_capsule_button"
+                        android:contentDescription="@string/tvremote_assistant"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_tv_icon_assistant"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_assistant"
+                            app:tint="?attr/colorOnSurface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/tvremote_assistant"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Home/Mute + Volume stack row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <!-- Left: Home + Mute stack -->
+                    <LinearLayout
+                        android:layout_width="130dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/btn_home"
+                            android:layout_width="130dp"
+                            android:layout_height="52dp"
+                            android:background="@drawable/bg_capsule_button"
+                            android:contentDescription="@string/tvremote_home"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_tv_icon_nav"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_home"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:text="@string/tvremote_home"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btn_mute"
+                            android:layout_width="130dp"
+                            android:layout_height="52dp"
+                            android:layout_marginTop="18dp"
+                            android:background="@drawable/bg_capsule_button"
+                            android:contentDescription="@string/tvremote_mute"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_tv_icon_media"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_volume_off"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:text="@string/tvremote_mute"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="28dp"
+                        android:layout_height="0dp" />
+
+                    <!-- Right: Volume Up + Down combined -->
+                    <LinearLayout
+                        android:id="@+id/btn_volume_stack"
+                        android:layout_width="130dp"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_volume_stack"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:id="@+id/btn_volume_up"
+                            android:layout_width="match_parent"
+                            android:layout_height="60dp"
+                            android:background="@drawable/bg_volume_item"
+                            android:clickable="true"
+                            android:contentDescription="@string/tvremote_volume_up"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_tv_icon_media"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_volume_up"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:text="@string/tvremote_volume_up"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:background="@color/outline_variant" />
+
+                        <LinearLayout
+                            android:id="@+id/btn_volume_down"
+                            android:layout_width="match_parent"
+                            android:layout_height="60dp"
+                            android:background="@drawable/bg_volume_item"
+                            android:clickable="true"
+                            android:contentDescription="@string/tvremote_volume_down"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="12dp">
+
+                            <ImageView
+                                android:layout_width="32dp"
+                                android:layout_height="32dp"
+                                android:background="@drawable/bg_tv_icon_media"
+                                android:padding="6dp"
+                                android:src="@drawable/ic_volume_down"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:text="@string/tvremote_volume_down"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+</LinearLayout>

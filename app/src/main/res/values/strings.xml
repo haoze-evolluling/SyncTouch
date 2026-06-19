@@ -1,0 +1,118 @@
+<resources>
+    <string name="app_name">SyncTouch</string>
+
+    <!-- Button labels -->
+    <string name="btn_yes">确认</string>
+    <string name="btn_no">拒绝</string>
+    <string name="btn_ctrl_c">Ctrl+C</string>
+    <string name="btn_backspace">退格</string>
+    <string name="btn_enter">回车</string>
+    <string name="btn_yes_to_all">全部确认</string>
+    <string name="btn_add_macro">+ 添加自定义宏</string>
+    <string name="btn_disconnect">断开</string>
+
+    <!-- Status messages -->
+    <string name="status_unknown_device">未知设备</string>
+    <string name="status_connected_label">已连接</string>
+    <string name="status_not_connected">未连接设备</string>
+    <string name="device_name_status">%1$s · %2$s</string>
+
+    <!-- Notification -->
+    <string name="notification_channel_name">蓝牙 HID 服务</string>
+    <string name="notification_channel_description">显示蓝牙 HID 键盘连接状态</string>
+    <string name="notification_title">SyncTouch</string>
+    <string name="notification_waiting">等待配对…</string>
+    <string name="notification_connected">已连接: %s</string>
+
+    <!-- Dialog titles -->
+    <string name="dialog_add_macro">添加自定义宏</string>
+    <string name="dialog_edit_macro">编辑宏</string>
+    <string name="dialog_macro_label">名称</string>
+    <string name="dialog_macro_command">命令</string>
+    <string name="dialog_macro_description">备注（可选）</string>
+    <string name="dialog_save">保存</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="dialog_delete">删除</string>
+    <string name="dialog_delete_macro">删除宏</string>
+    <string name="dialog_delete_macro_message">确定要删除这个宏吗？</string>
+
+    <!-- Toast messages -->
+    <string name="toast_bluetooth_not_supported">此设备不支持蓝牙 HID</string>
+    <string name="toast_permission_denied">蓝牙权限被拒绝</string>
+    <string name="toast_macro_added">宏已添加</string>
+    <string name="toast_macro_updated">宏已更新</string>
+    <string name="toast_macro_deleted">宏已删除</string>
+
+    <!-- Macro list -->
+    <string name="macro_list_title">快捷命令</string>
+    <string name="macro_long_press_hint">长按自定义宏可编辑或删除</string>
+
+    <!-- Settings -->
+    <string name="settings">设置</string>
+    <string name="back">返回</string>
+    <string name="settings_reset_macros">重置宏为默认值</string>
+    <string name="settings_section_data">数据管理</string>
+    <string name="dialog_reset_macros_confirm">确定要重置所有宏为默认值吗？自定义宏将被删除。</string>
+    <string name="dialog_reset">重置</string>
+    <string name="switch_send_enter">发送回车</string>
+    <string name="device_list_title">设备列表</string>
+    <string name="device_last_connected">上次连接</string>
+    <string name="device_no_paired">没有已配对设备，请先在系统蓝牙设置中配对</string>
+    <string name="dialog_connect_timeout_title">连接超时</string>
+    <string name="dialog_connect_timeout_message">连接超时，请重试</string>
+    <string name="dialog_ok">确定</string>
+
+    <!-- Bottom Navigation Tabs -->
+    <string name="tab_claude">首页</string>
+    <string name="tab_keyboard">键盘</string>
+    <string name="tab_touchpad">触控板</string>
+    <string name="touchpad_sensitivity">灵敏度</string>
+
+    <!-- Keyboard key labels -->
+    <string name="key_esc">Esc</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_caps">Caps</string>
+    <string name="key_shift">Shift</string>
+    <string name="key_ctrl">Ctrl</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_win">Win</string>
+    <string name="key_space">Space</string>
+    <string name="key_bksp">Bksp</string>
+    <string name="key_enter">Enter</string>
+
+    <!-- Home page -->
+    <string name="home_functions">功能</string>
+    <string name="home_system">系统</string>
+    <string name="home_hero_subtitle">手机即键盘，指尖控全场</string>
+    <string name="home_connection_status">连接状态</string>
+    <string name="home_claude_chip">Claude</string>
+    <string name="home_keyboard_title">键盘</string>
+    <string name="home_keyboard_subtitle">蓝牙 HID 键盘输入</string>
+    <string name="home_touchpad_title">触控板</string>
+    <string name="home_touchpad_subtitle">蓝牙 HID 鼠标控制</string>
+    <string name="home_claude_title">Claude 助手</string>
+    <string name="home_claude_subtitle">快速发送常用命令</string>
+    <string name="home_settings_title">设置</string>
+    <string name="home_settings_subtitle">主题与数据管理</string>
+    <string name="nav_back">返回</string>
+
+    <string name="home_tvremote_title">电视遥控器</string>
+    <string name="home_tvremote_subtitle">蓝牙 HID 遥控操作</string>
+
+    <!-- TV Remote -->
+    <string name="tvremote_power">电源</string>
+    <string name="tvremote_back">返回</string>
+    <string name="tvremote_assistant">语音助手</string>
+    <string name="tvremote_home">主页</string>
+    <string name="tvremote_mute">静音</string>
+    <string name="tvremote_volume_up">音量+</string>
+    <string name="tvremote_volume_down">音量-</string>
+    <string name="tvremote_led_label">指示灯</string>
+    <string name="tvremote_ok">OK</string>
+
+    <!-- Preset macro descriptions -->
+    <string name="preset_clear_desc">清除终端屏幕</string>
+    <string name="preset_compact_desc">压缩上下文以节省 token</string>
+    <string name="preset_model_desc">切换当前使用的模型</string>
+    <string name="preset_btw_desc">附带消息继续对话</string>
+</resources>

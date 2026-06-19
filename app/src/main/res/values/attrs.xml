@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircularDpadView">
+        <attr name="outerRadius" format="dimension" />
+        <attr name="innerRadius" format="dimension" />
+        <attr name="repeatDelay" format="integer" />
+        <attr name="ringColor" format="color" />
+        <attr name="ringBorderColor" format="color" />
+        <attr name="centerColor" format="color" />
+        <attr name="centerBorderColor" format="color" />
+        <attr name="dividerColor" format="color" />
+        <attr name="iconColor" format="color" />
+        <attr name="textColor" format="color" />
+    </declare-styleable>
+</resources>

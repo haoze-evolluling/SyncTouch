@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/touchpad_root"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/keyboard_total_height"
+    android:layout_gravity="top"
+    android:paddingStart="@dimen/keyboard_padding"
+    android:paddingEnd="@dimen/keyboard_padding_end"
+    android:paddingTop="@dimen/keyboard_padding"
+    android:paddingBottom="36dp">
+
+    <!-- Touchpad area -->
+    <View
+        android:id="@+id/touchpad_area"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="60dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="14dp"
+        android:background="@drawable/bg_touchpad_area" />
+
+    <!-- Bottom bar - positioned from screen bottom -->
+    <LinearLayout
+        android:id="@+id/touchpad_bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Back button -->
+        <TextView
+            android:id="@+id/tv_back_to_home"
+            android:layout_width="@dimen/keyboard_back_button_width"
+            android:layout_height="@dimen/keyboard_key_height"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="@dimen/keyboard_key_margin"
+            android:background="@drawable/bg_outline_button"
+            android:clickable="true"
+            android:focusable="false"
+            android:gravity="center"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="@dimen/keyboard_key_text_size" />
+
+        <!-- Keyboard button -->
+        <TextView
+            android:id="@+id/tv_to_keyboard"
+            android:layout_width="@dimen/keyboard_back_button_width"
+            android:layout_height="@dimen/keyboard_key_height"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="@dimen/keyboard_key_margin"
+            android:background="@drawable/bg_outline_button"
+            android:clickable="true"
+            android:focusable="false"
+            android:gravity="center"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="@dimen/keyboard_key_text_size" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/touchpad_sensitivity"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginEnd="8dp" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slider_sensitivity"
+            android:layout_width="160dp"
+            android:layout_height="wrap_content"
+            android:valueFrom="1"
+            android:valueTo="10"
+            android:stepSize="1"
+            android:value="5" />
+
+    </LinearLayout>
+
+</FrameLayout>

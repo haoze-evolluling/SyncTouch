@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/content_claude"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_home_screen"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Top Bar - Hero 风格渐变 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/top_bar"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:background="@drawable/bg_home_hero"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:id="@+id/tv_claude_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/home_claude_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="@color/home_on_hero"
+                app:layout_constraintBottom_toTopOf="@id/tv_claude_subtitle"
+                app:layout_constraintEnd_toStartOf="@id/btn_settings"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed" />
+
+            <TextView
+                android:id="@+id/tv_claude_subtitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/home_claude_subtitle"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="@color/home_on_hero_variant"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btn_settings"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_claude_title" />
+
+            <ImageButton
+                android:id="@+id/btn_settings"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_home_icon_button"
+                android:contentDescription="@string/home_settings_title"
+                android:scaleType="centerInside"
+                android:src="@drawable/baseline_settings_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/home_on_hero" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Connection Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/home_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/home_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:id="@+id/claude_status_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_home_status_badge"
+                    android:padding="11dp"
+                    android:src="@drawable/baseline_bluetooth_24"
+                    android:tint="?attr/colorOnSurfaceVariant" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/home_connection_status"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <TextView
+                        android:id="@+id/tv_claude_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/status_not_connected"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Core Buttons Card: 2x3 Grid -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/home_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/home_card_stroke"
+            app:strokeWidth="1dp">
+
+            <GridLayout
+                android:id="@+id/grid_buttons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:padding="12dp"
+                android:rowCount="3"
+                android:useDefaultMargins="true">
+
+                <!-- Row 0, Col 0: Yes -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_yes"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/btn_yes"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="@color/positive_green"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_check_18"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/positive_green"
+                    app:strokeColor="@color/positive_green"
+                    app:strokeWidth="1dp" />
+
+                <!-- Row 0, Col 1: Yes to All -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_yes_to_all"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/btn_yes_to_all"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="@color/positive_green"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/positive_green"
+                    app:strokeWidth="1dp" />
+
+                <!-- Row 1, Col 0: No -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_no"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/btn_no"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorError"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_close_18"
+                    app:iconGravity="textStart"
+                    app:iconTint="?attr/colorError"
+                    app:strokeColor="?attr/colorError"
+                    app:strokeWidth="1dp" />
+
+                <!-- Row 1, Col 1: Ctrl+C -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_ctrl_c"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/btn_ctrl_c"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorPrimary"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="?attr/colorPrimary"
+                    app:strokeWidth="1dp" />
+
+                <!-- Row 2, Col 0: Backspace -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_backspace"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/btn_backspace"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorError"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="?attr/colorError"
+                    app:strokeWidth="1dp" />
+
+                <!-- Row 2, Col 1: Enter -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_enter"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="@string/btn_enter"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorPrimary"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_keyboard_return_18"
+                    app:iconGravity="textStart"
+                    app:iconTint="?attr/colorPrimary"
+                    app:strokeColor="?attr/colorPrimary"
+                    app:strokeWidth="1dp" />
+
+            </GridLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Macro Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="@color/home_card"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/home_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/macro_list_title"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/tv_macro_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/macro_long_press_hint"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOutline" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_macros"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="false" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>
