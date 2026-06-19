@@ -4,5 +4,5 @@
         android:angle="135"
         android:startColor="@color/home_hero_start"
         android:endColor="@color/home_hero_end" />
-    <corners android:radius="32dp" />
+    <corners android:radius="22dp" />
 </shape>

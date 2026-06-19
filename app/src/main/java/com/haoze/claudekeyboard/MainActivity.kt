@@ -198,6 +198,10 @@ class MainActivity : AppCompatActivity() {
             it.performKeyClick()
             navigateToPage(contentSettings, landscape = false)
         }
+        findViewById<ImageButton>(R.id.btn_back_claude).setOnClickListener {
+            it.performKeyClick()
+            navigateToHome()
+        }
         findViewById<ImageButton>(R.id.btn_home_settings).setOnClickListener {
             it.performKeyClick()
             navigateToPage(contentSettings, landscape = false)
