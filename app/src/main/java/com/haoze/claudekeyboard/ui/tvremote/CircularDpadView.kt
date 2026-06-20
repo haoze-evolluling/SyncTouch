@@ -45,7 +45,7 @@ class CircularDpadView @JvmOverloads constructor(
     private var centerBorderColor: Int = Color.parseColor("#D0D0D0")
     private var dividerColor: Int = Color.parseColor("#D0D0D0")
     private var iconColor: Int = Color.parseColor("#6A6E7C")
-    private var textColor: Int = Color.parseColor("#191B24")
+    private var textColor: Int = 0
 
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val ringBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -87,6 +87,12 @@ class CircularDpadView @JvmOverloads constructor(
             iconColor = a.getColor(R.styleable.CircularDpadView_iconColor, iconColor)
             textColor = a.getColor(R.styleable.CircularDpadView_textColor, textColor)
             a.recycle()
+        }
+
+        if (textColor == 0) {
+            val tv = TypedValue()
+            context.theme.resolveAttribute(android.R.attr.textColorPrimary, tv, true)
+            textColor = tv.data
         }
 
         setupPaints()
