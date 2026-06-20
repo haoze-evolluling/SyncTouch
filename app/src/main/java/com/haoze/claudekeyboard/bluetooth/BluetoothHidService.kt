@@ -44,6 +44,9 @@ class BluetoothHidService : Service() {
         private const val PREFS_NAME = "bluetooth_prefs"
         private const val KEY_LAST_DEVICE_ADDRESS = "last_device_address"
         private const val KEY_LAST_DEVICE_NAME = "last_device_name"
+        private const val PREFS_SETTINGS_NAME = "settings_prefs"
+        private const val KEY_AUTO_CONNECT_LAUNCH = "auto_connect_on_launch"
+        private const val KEY_AUTO_RECONNECT = "auto_reconnect_on_disconnect"
     }
 
     // ---- Binder ----
@@ -97,6 +100,10 @@ class BluetoothHidService : Service() {
 
     private val prefs: SharedPreferences by lazy {
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    private val settingsPrefs: SharedPreferences by lazy {
+        getSharedPreferences(PREFS_SETTINGS_NAME, Context.MODE_PRIVATE)
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -325,6 +332,12 @@ class BluetoothHidService : Service() {
                     )
                     updateNotification(getString(R.string.notification_waiting))
                     onRegistrationStateChanged?.invoke(true)
+                    if (settingsPrefs.getBoolean(KEY_AUTO_CONNECT_LAUNCH, true)) {
+                        val lastAddr = prefs.getString(KEY_LAST_DEVICE_ADDRESS, null)
+                        if (lastAddr != null) {
+                            tryConnectToLastDevice()
+                        }
+                    }
                 } else {
                     state = HidState.Unregistered
                     scheduleRegistrationRetry()
@@ -393,7 +406,7 @@ class BluetoothHidService : Service() {
                         onConnectionStateChanged?.invoke(false, null)
                         setDiscoverable()
 
-                        if (!userInitiatedDisconnect) {
+                        if (!userInitiatedDisconnect && settingsPrefs.getBoolean(KEY_AUTO_RECONNECT, true)) {
                             scheduleReconnect()
                         }
                         userInitiatedDisconnect = false
