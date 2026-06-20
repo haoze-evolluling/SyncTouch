@@ -1,6 +1,8 @@
 package com.haoze.claudekeyboard
 
 import android.Manifest
+import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -20,6 +22,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
 import com.haoze.claudekeyboard.bluetooth.BluetoothViewModel
 import com.haoze.claudekeyboard.bluetooth.KeyboardSender
 import com.haoze.claudekeyboard.macro.Macro
@@ -396,6 +400,31 @@ class MainActivity : AppCompatActivity() {
                 .create()
             dlg.fixM3Background()
             dlg.show()
+        }
+
+        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+
+        val switchAutoConnect = findViewById<MaterialSwitch>(R.id.switch_auto_connect)
+        switchAutoConnect.isChecked = prefs.getBoolean("auto_connect_on_launch", true)
+        switchAutoConnect.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("auto_connect_on_launch", isChecked).apply()
+        }
+
+        val switchAutoReconnect = findViewById<MaterialSwitch>(R.id.switch_auto_reconnect)
+        switchAutoReconnect.isChecked = prefs.getBoolean("auto_reconnect_on_disconnect", true)
+        switchAutoReconnect.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("auto_reconnect_on_disconnect", isChecked).apply()
+        }
+
+        val sliderSensitivity = findViewById<Slider>(R.id.slider_default_sensitivity)
+        val tvSensitivityValue = findViewById<TextView>(R.id.tv_sensitivity_value)
+        val currentSensitivity = prefs.getInt("touchpad_sensitivity", 5)
+        sliderSensitivity.value = currentSensitivity.toFloat()
+        tvSensitivityValue.text = currentSensitivity.toString()
+        sliderSensitivity.addOnChangeListener { _, value, _ ->
+            val intVal = value.toInt()
+            tvSensitivityValue.text = intVal.toString()
+            prefs.edit().putInt("touchpad_sensitivity", intVal).apply()
         }
     }
 
