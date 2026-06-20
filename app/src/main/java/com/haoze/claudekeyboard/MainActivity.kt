@@ -16,6 +16,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
@@ -79,8 +80,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homeAdapter: HomeAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
         val themeMode = prefs.getString("theme_mode", "MODE_SYSTEM") ?: "MODE_SYSTEM"
         AppCompatDelegate.setDefaultNightMode(
@@ -90,6 +89,9 @@ class MainActivity : AppCompatActivity() {
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         )
+        installSplashScreen()
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
         // Check Bluetooth support
