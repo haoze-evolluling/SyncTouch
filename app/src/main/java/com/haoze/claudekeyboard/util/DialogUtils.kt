@@ -21,7 +21,7 @@ fun Context.resolveAttrColor(attr: Int): Int {
 }
 
 /**
- * Replace dialog background with solid white, preserving M3 rounded corners.
+ * Replace dialog background with theme-aware card color, preserving M3 rounded corners.
  *
  * This fixes the issue where M3's MaterialShapeDrawable applies tonal elevation tint
  * that can't be overridden via theme attributes alone.
