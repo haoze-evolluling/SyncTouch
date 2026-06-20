@@ -121,4 +121,10 @@
     <string name="preset_compact_desc">压缩上下文以节省 token</string>
     <string name="preset_model_desc">切换当前使用的模型</string>
     <string name="preset_btw_desc">附带消息继续对话</string>
+<!-- Theme mode -->
+    <string name="settings_section_appearance">外观</string>
+    <string name="settings_theme_mode">主题模式</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
 </resources>
