@@ -183,7 +183,8 @@ class SettingsAdapter(
                         ViewGroup.LayoutParams.WRAP_CONTENT,
                         1f
                     )
-                    textSize = 11f
+                    textSize = 12f
+                    isAllCaps = false
                 }
                 toggleGroup.addView(button)
                 if (index == currentIndex) {
