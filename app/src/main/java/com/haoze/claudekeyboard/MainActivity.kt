@@ -38,6 +38,9 @@ import com.haoze.claudekeyboard.ui.macro.MacroButtonAdapter
 import com.haoze.claudekeyboard.ui.macro.MacroEditDialogFragment
 import com.haoze.claudekeyboard.ui.settings.SettingsAdapter
 import com.haoze.claudekeyboard.ui.settings.SettingsItem
+import android.animation.ObjectAnimator
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import com.haoze.claudekeyboard.ui.touchpad.TouchpadFragment
 import com.haoze.claudekeyboard.ui.tvremote.TvRemoteFragment
 import com.haoze.claudekeyboard.util.fixM3Background
@@ -408,12 +411,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSettingsPage() {
         val btnBack = findViewById<ImageButton>(R.id.btn_back_settings)
+        val cardTitle = findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.card_settings_title)
         btnBack.setOnClickListener {
             it.performKeyClick()
             navigateToHome()
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            cardTitle.setRenderEffect(
+                RenderEffect.createBlurEffect(25f, 25f, Shader.TileMode.CLAMP)
+            )
+        }
+
         val rvSettings = findViewById<RecyclerView>(R.id.rv_settings)
+        rvSettings.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val scrollOffset = recyclerView.computeVerticalScrollOffset()
+                val maxScroll = (40 * resources.displayMetrics.density).toInt()
+                val fraction = (scrollOffset.toFloat() / maxScroll).coerceIn(0f, 1f)
+                val targetElevation = 4f + fraction * 8f
+                ObjectAnimator.ofFloat(cardTitle, "elevation", cardTitle.elevation, targetElevation).apply {
+                    duration = 50
+                    start()
+                }
+            }
+        })
+
         val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
 
         val adapter = SettingsAdapter(
