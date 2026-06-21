@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -39,6 +40,7 @@ import com.haoze.claudekeyboard.ui.macro.MacroEditDialogFragment
 import com.haoze.claudekeyboard.ui.settings.SettingsAdapter
 import com.haoze.claudekeyboard.ui.settings.SettingsItem
 import android.animation.ObjectAnimator
+import android.view.animation.AccelerateDecelerateInterpolator
 import com.haoze.claudekeyboard.ui.touchpad.TouchpadFragment
 import com.haoze.claudekeyboard.ui.tvremote.TvRemoteFragment
 import com.haoze.claudekeyboard.util.fixM3Background
@@ -291,12 +293,41 @@ class MainActivity : AppCompatActivity() {
         homeAdapter.submitList(items)
     }
 
-    private fun showOnly(target: View) {
-        allContentViews.forEach { it.visibility = if (it == target) View.VISIBLE else View.GONE }
+    private fun showOnly(target: View, animate: Boolean = true) {
+        val oldView = allContentViews.firstOrNull { it.visibility == View.VISIBLE }
+        if (oldView == target || !animate) {
+            allContentViews.forEach { it.visibility = if (it == target) View.VISIBLE else View.GONE }
+            return
+        }
+
+        oldView?.animate()
+            ?.scaleX(0.8f)?.scaleY(0.8f)?.alpha(0f)
+            ?.setDuration(300)
+            ?.setInterpolator(AccelerateDecelerateInterpolator())
+            ?.withEndAction { oldView.visibility = View.GONE }
+            ?.start()
+
+        target.apply {
+            visibility = View.VISIBLE
+            scaleX = 0.8f
+            scaleY = 0.8f
+            alpha = 0f
+            animate()
+                .scaleX(1f).scaleY(1f).alpha(1f)
+                .setDuration(300)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .start()
+        }
+
+        allContentViews.forEach { if (it != target && it != oldView) it.visibility = View.GONE }
     }
 
     fun navigateToPage(targetContent: View, landscape: Boolean) {
-        showOnly(targetContent)
+        val currentOrientation = resources.configuration.orientation
+        val targetOrientation = if (landscape) Configuration.ORIENTATION_LANDSCAPE else Configuration.ORIENTATION_PORTRAIT
+        val sameOrientation = currentOrientation == targetOrientation
+
+        showOnly(targetContent, animate = sameOrientation)
 
         requestedOrientation = if (landscape) {
             ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -318,7 +349,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun navigateToHome() {
-        showOnly(contentHome)
+        val currentOrientation = resources.configuration.orientation
+        val sameOrientation = currentOrientation == Configuration.ORIENTATION_PORTRAIT
+
+        showOnly(contentHome, animate = sameOrientation)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         updateDeviceSubtitle()
         updateKeepScreenOn(bluetoothViewModel.isConnected())
