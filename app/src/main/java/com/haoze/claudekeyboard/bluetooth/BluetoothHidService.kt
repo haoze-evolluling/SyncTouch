@@ -36,6 +36,8 @@ class BluetoothHidService : Service() {
         private const val TAG = "BluetoothHidService"
         private const val NOTIFICATION_CHANNEL_ID = "bluetooth_hid_channel"
         private const val NOTIFICATION_ID = 1001
+        private const val CONNECTION_NOTIFICATION_CHANNEL_ID = "connection_events"
+        private const val CONNECTION_NOTIFICATION_ID = 1002
         private const val MAX_REGISTRATION_RETRIES = 3
         private const val MAX_RECONNECT_RETRIES = 5
         private const val RECONNECT_BASE_DELAY_MS = 2_000L
@@ -148,6 +150,7 @@ class BluetoothHidService : Service() {
         registerReceiver(bluetoothStateReceiver, filter)
 
         createNotificationChannel()
+        createConnectionNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification(getString(R.string.notification_waiting)))
         initializeHidDevice()
     }
@@ -364,6 +367,7 @@ class BluetoothHidService : Service() {
                             .apply()
 
                         Log.d(TAG, "Connected to: $name")
+                        showConnectionNotification(getString(R.string.notification_connected, name ?: ""))
 
                         // Create senders
                         keyboardSender = KeyboardSender(hidDevice!!, device).also {
@@ -402,6 +406,7 @@ class BluetoothHidService : Service() {
                         mouseSender = null
                         tvRemoteSender = null
                         Log.d(TAG, "Disconnected")
+                        showConnectionNotification(getString(R.string.notification_disconnected))
                         updateNotification(getString(R.string.notification_waiting))
                         onConnectionStateChanged?.invoke(false, null)
                         setDiscoverable()
@@ -581,6 +586,46 @@ class BluetoothHidService : Service() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+
+    private fun createConnectionNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CONNECTION_NOTIFICATION_CHANNEL_ID,
+                getString(R.string.notification_connection_channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "设备连接和断开通知"
+                setShowBadge(false)
+            }
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun showConnectionNotification(contentText: String) {
+        if (!settingsPrefs.getBoolean("connection_notifications", true)) return
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 1, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(this, CONNECTION_NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.notification_title))
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(CONNECTION_NOTIFICATION_ID, notification)
+    }
+
+    fun dismissConnectionNotification() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(CONNECTION_NOTIFICATION_ID)
     }
 
     private fun createNotification(contentText: String): Notification {

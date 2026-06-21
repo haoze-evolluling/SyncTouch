@@ -1,13 +1,20 @@
 package com.haoze.claudekeyboard.util
 
+import android.content.Context
 import android.view.HapticFeedbackConstants
 import android.view.View
 
-/**
- * Trigger crisp haptic feedback on a clickable view.
- * Uses KEYBOARD_TAP for a short, tactile "click" feel.
- * No VIBRATE permission required — respects system haptic settings.
- */
 fun View.performKeyClick() {
+    if (!isHapticEnabled()) return
     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+}
+
+fun View.performHapticLongPress() {
+    if (!isHapticEnabled()) return
+    performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+}
+
+fun View.isHapticEnabled(): Boolean {
+    val prefs = context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+    return prefs.getBoolean("haptic_feedback", true)
 }

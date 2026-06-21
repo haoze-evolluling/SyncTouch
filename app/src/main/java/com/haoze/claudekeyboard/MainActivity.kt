@@ -4,10 +4,12 @@ import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -23,10 +25,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.materialswitch.MaterialSwitch
-import com.google.android.material.slider.Slider
 import com.haoze.claudekeyboard.bluetooth.BluetoothViewModel
 import com.haoze.claudekeyboard.bluetooth.KeyboardSender
 import com.haoze.claudekeyboard.macro.Macro
@@ -37,6 +36,8 @@ import com.haoze.claudekeyboard.ui.home.HomeItem
 import com.haoze.claudekeyboard.ui.keyboard.KeyboardFragment
 import com.haoze.claudekeyboard.ui.macro.MacroButtonAdapter
 import com.haoze.claudekeyboard.ui.macro.MacroEditDialogFragment
+import com.haoze.claudekeyboard.ui.settings.SettingsAdapter
+import com.haoze.claudekeyboard.ui.settings.SettingsItem
 import com.haoze.claudekeyboard.ui.touchpad.TouchpadFragment
 import com.haoze.claudekeyboard.ui.tvremote.TvRemoteFragment
 import com.haoze.claudekeyboard.util.fixM3Background
@@ -81,11 +82,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-        val themeMode = prefs.getString("theme_mode", "MODE_SYSTEM") ?: "MODE_SYSTEM"
+        val themeIndex = prefs.getInt("theme_mode_index", 0)
         AppCompatDelegate.setDefaultNightMode(
-            when (themeMode) {
-                "MODE_LIGHT" -> AppCompatDelegate.MODE_NIGHT_NO
-                "MODE_DARK" -> AppCompatDelegate.MODE_NIGHT_YES
+            when (themeIndex) {
+                1 -> AppCompatDelegate.MODE_NIGHT_NO
+                2 -> AppCompatDelegate.MODE_NIGHT_YES
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         )
@@ -307,6 +308,7 @@ class MainActivity : AppCompatActivity() {
             updateFragmentEnabledStates()
         } else if (targetContent == contentTouchpad) {
             touchpadFragment = supportFragmentManager.findFragmentById(R.id.touchpad_fragment_container) as? TouchpadFragment
+            touchpadFragment?.reloadSettings()
             updateFragmentEnabledStates()
         } else if (targetContent == contentTvRemote) {
             tvRemoteFragment = supportFragmentManager.findFragmentById(R.id.tvremote_fragment_container) as? TvRemoteFragment
@@ -318,6 +320,7 @@ class MainActivity : AppCompatActivity() {
         showOnly(contentHome)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         updateDeviceSubtitle()
+        updateKeepScreenOn(bluetoothViewModel.isConnected())
     }
 
     private fun updateDeviceSubtitle() {
@@ -346,6 +349,7 @@ class MainActivity : AppCompatActivity() {
             val isConnected = state == BluetoothViewModel.ConnectionState.CONNECTED
             val deviceName = bluetoothViewModel.connectedDeviceName.value
             updateStatusUI(isConnected, deviceName)
+            updateKeepScreenOn(isConnected)
             if (isConnected) {
                 deviceListDialog?.onConnectionSuccess()
                 deviceListDialog = null
@@ -393,6 +397,16 @@ class MainActivity : AppCompatActivity() {
         tvRemoteFragment?.setTvRemoteEnabled(connected)
     }
 
+    private fun updateKeepScreenOn(isConnected: Boolean) {
+        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+        val keepScreenOn = prefs.getBoolean("keep_screen_on", true)
+        if (isConnected && keepScreenOn) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     private fun setupSettingsPage() {
         val btnBack = findViewById<ImageButton>(R.id.btn_back_settings)
         btnBack.setOnClickListener {
@@ -400,71 +414,83 @@ class MainActivity : AppCompatActivity() {
             navigateToHome()
         }
 
-        val resetMacrosLayout = findViewById<View>(R.id.settings_reset_macros)
-        resetMacrosLayout.setOnClickListener {
-            val dlg = MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.settings_reset_macros)
-                .setMessage(R.string.dialog_reset_macros_confirm)
-                .setPositiveButton(R.string.dialog_reset) { _, _ ->
-                    macroRepository.resetToDefaults()
-                    loadMacros()
-                }
-                .setNegativeButton(R.string.dialog_cancel, null)
-                .create()
-            dlg.fixM3Background()
-            dlg.show()
-        }
-
+        val rvSettings = findViewById<RecyclerView>(R.id.rv_settings)
         val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
 
-        val switchAutoConnect = findViewById<MaterialSwitch>(R.id.switch_auto_connect)
-        switchAutoConnect.isChecked = prefs.getBoolean("auto_connect_on_launch", true)
-        switchAutoConnect.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("auto_connect_on_launch", isChecked).apply()
-        }
-
-        val switchAutoReconnect = findViewById<MaterialSwitch>(R.id.switch_auto_reconnect)
-        switchAutoReconnect.isChecked = prefs.getBoolean("auto_reconnect_on_disconnect", true)
-        switchAutoReconnect.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("auto_reconnect_on_disconnect", isChecked).apply()
-        }
-
-        val sliderSensitivity = findViewById<Slider>(R.id.slider_default_sensitivity)
-        val tvSensitivityValue = findViewById<TextView>(R.id.tv_sensitivity_value)
-        val currentSensitivity = prefs.getInt("touchpad_sensitivity", 5)
-        sliderSensitivity.value = currentSensitivity.toFloat()
-        tvSensitivityValue.text = currentSensitivity.toString()
-        sliderSensitivity.addOnChangeListener { _, value, _ ->
-            val intVal = value.toInt()
-            tvSensitivityValue.text = intVal.toString()
-            prefs.edit().putInt("touchpad_sensitivity", intVal).apply()
-        }
-
-        val toggleTheme = findViewById<MaterialButtonToggleGroup>(R.id.toggle_theme_mode)
-        val themeMode = prefs.getString("theme_mode", "MODE_SYSTEM") ?: "MODE_SYSTEM"
-        toggleTheme.check(
-            when (themeMode) {
-                "MODE_LIGHT" -> R.id.btn_theme_light
-                "MODE_DARK" -> R.id.btn_theme_dark
-                else -> R.id.btn_theme_system
+        val adapter = SettingsAdapter(
+            prefs = prefs,
+            onToggleGroupChanged = { key, index ->
+                if (key == "theme_mode_index") {
+                    AppCompatDelegate.setDefaultNightMode(
+                        when (index) {
+                            1 -> AppCompatDelegate.MODE_NIGHT_NO
+                            2 -> AppCompatDelegate.MODE_NIGHT_YES
+                            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                        }
+                    )
+                    recreate()
+                }
+            },
+            onButtonClick = { item ->
+                when (item.title) {
+                    getString(R.string.settings_reset_macros) -> {
+                        val dlg = MaterialAlertDialogBuilder(this)
+                            .setTitle(R.string.settings_reset_macros)
+                            .setMessage(R.string.dialog_reset_macros_confirm)
+                            .setPositiveButton(R.string.dialog_reset) { _, _ ->
+                                macroRepository.resetToDefaults()
+                                loadMacros()
+                            }
+                            .setNegativeButton(R.string.dialog_cancel, null)
+                            .create()
+                        dlg.fixM3Background()
+                        dlg.show()
+                    }
+                }
+            },
+            onSwitchChanged = { key, value ->
+                if (key == "connection_notifications" && !value) {
+                    bluetoothViewModel.dismissConnectionNotification()
+                }
             }
         )
-        toggleTheme.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            val mode = when (checkedId) {
-                R.id.btn_theme_light -> "MODE_LIGHT"
-                R.id.btn_theme_dark -> "MODE_DARK"
-                else -> "MODE_SYSTEM"
-            }
-            prefs.edit().putString("theme_mode", mode).apply()
-            AppCompatDelegate.setDefaultNightMode(
-                when (mode) {
-                    "MODE_LIGHT" -> AppCompatDelegate.MODE_NIGHT_NO
-                    "MODE_DARK" -> AppCompatDelegate.MODE_NIGHT_YES
-                    else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                }
-            )
+
+        rvSettings.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            this.adapter = adapter
         }
+
+        val versionName = try {
+            val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
+            pInfo.versionName ?: "1.0.0"
+        } catch (e: Exception) {
+            "1.0.0"
+        }
+
+        val items = listOf(
+            SettingsItem.SectionHeader(getString(R.string.settings_section_connection)),
+            SettingsItem.SwitchItem("auto_connect_on_launch", getString(R.string.settings_auto_connect_launch), null, true),
+            SettingsItem.SwitchItem("auto_reconnect_on_disconnect", getString(R.string.settings_auto_reconnect), null, true),
+            SettingsItem.SwitchItem("keep_screen_on", getString(R.string.settings_keep_screen_on), getString(R.string.settings_keep_screen_on_subtitle), true),
+            SettingsItem.SwitchItem("connection_notifications", getString(R.string.settings_connection_notifications), getString(R.string.settings_connection_notifications_subtitle), true),
+            SettingsItem.SectionHeader(getString(R.string.settings_section_touchpad)),
+            SettingsItem.SliderItem("touchpad_sensitivity", getString(R.string.settings_touchpad_sensitivity), null, 5, 1f, 10f, 1f),
+            SettingsItem.SliderItem("cursor_speed", getString(R.string.settings_cursor_speed), null, 5, 1f, 10f, 1f),
+            SettingsItem.SwitchItem("scroll_direction_natural", getString(R.string.settings_scroll_direction_natural), null, false),
+            SettingsItem.SectionHeader(getString(R.string.settings_section_interaction)),
+            SettingsItem.SwitchItem("haptic_feedback", getString(R.string.settings_haptic_feedback), getString(R.string.settings_haptic_feedback_subtitle), true),
+            SettingsItem.SectionHeader(getString(R.string.settings_section_data)),
+            SettingsItem.ButtonItem(getString(R.string.settings_reset_macros)),
+            SettingsItem.SectionHeader(getString(R.string.settings_section_appearance)),
+            SettingsItem.ToggleGroupItem("theme_mode_index", getString(R.string.settings_theme_mode), listOf(getString(R.string.settings_theme_system), getString(R.string.settings_theme_light), getString(R.string.settings_theme_dark)), 0),
+            SettingsItem.SectionHeader(getString(R.string.settings_section_about)),
+            SettingsItem.InfoItem(getString(R.string.settings_app_name_label), getString(R.string.app_name)),
+            SettingsItem.InfoItem(getString(R.string.settings_version), versionName),
+            SettingsItem.InfoItem(getString(R.string.settings_open_source), "", onClick = {
+                // Placeholder for open source license
+            })
+        )
+        adapter.submitList(items)
     }
 
     private fun setupCoreButtons() {

@@ -23,6 +23,8 @@
     <string name="notification_title">SyncTouch</string>
     <string name="notification_waiting">等待配对…</string>
     <string name="notification_connected">已连接: %s</string>
+    <string name="notification_disconnected">设备已断开</string>
+    <string name="notification_connection_channel_name">连接事件</string>
 
     <!-- Dialog titles -->
     <string name="dialog_add_macro">添加自定义宏</string>
@@ -54,12 +56,25 @@
     <string name="settings_reset_macros">重置宏为默认值</string>
     <string name="settings_section_data">数据管理</string>
     <string name="settings_section_connection">连接</string>
+    <string name="settings_section_touchpad">触控板</string>
+    <string name="settings_section_interaction">交互</string>
+    <string name="settings_section_about">关于</string>
     <string name="settings_auto_connect_launch">启动时自动连接上次设备</string>
     <string name="settings_auto_reconnect">断线后自动重连</string>
-    <string name="settings_section_touchpad">触控板</string>
+    <string name="settings_keep_screen_on">保持屏幕常亮</string>
+    <string name="settings_keep_screen_on_subtitle">连接设备时不自动锁屏</string>
+    <string name="settings_connection_notifications">连接通知</string>
+    <string name="settings_connection_notifications_subtitle">设备连接/断开时显示通知</string>
     <string name="settings_touchpad_sensitivity">默认灵敏度</string>
+    <string name="settings_cursor_speed">光标速度</string>
+    <string name="settings_scroll_direction_natural">自然滚动</string>
+    <string name="settings_haptic_feedback">触感反馈</string>
+    <string name="settings_haptic_feedback_subtitle">点击时触发振动反馈</string>
     <string name="dialog_reset_macros_confirm">确定要重置所有宏为默认值吗？自定义宏将被删除。</string>
     <string name="dialog_reset">重置</string>
+    <string name="settings_version">版本</string>
+    <string name="settings_app_name_label">应用名称</string>
+    <string name="settings_open_source">开源许可</string>
     <string name="switch_send_enter">发送回车</string>
     <string name="device_list_title">设备列表</string>
     <string name="device_last_connected">上次连接</string>

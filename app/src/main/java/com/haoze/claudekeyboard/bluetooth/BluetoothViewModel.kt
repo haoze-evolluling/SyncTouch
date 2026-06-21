@@ -132,6 +132,10 @@ class BluetoothViewModel(application: Application) : AndroidViewModel(applicatio
         hidService?.disconnect()
     }
 
+    fun dismissConnectionNotification() {
+        hidService?.dismissConnectionNotification()
+    }
+
     fun hasBluetoothSupport(): Boolean {
         val context = getApplication<Application>()
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)

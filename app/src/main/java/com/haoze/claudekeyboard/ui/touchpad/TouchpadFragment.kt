@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -20,6 +19,7 @@ import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.bluetooth.BluetoothViewModel
 import com.haoze.claudekeyboard.bluetooth.MouseReport
 import com.haoze.claudekeyboard.bluetooth.MouseSender
+import com.haoze.claudekeyboard.util.performHapticLongPress
 import com.haoze.claudekeyboard.util.performKeyClick
 import kotlin.math.sqrt
 
@@ -53,6 +53,12 @@ class TouchpadFragment : Fragment() {
     // Sensitivity (1-10, maps to multiplier)
     private var sensitivity = 5
 
+    // Cursor speed (1-10, maps to multiplier 0.2x-2.0x)
+    private var cursorSpeed = 5
+
+    // Natural scrolling (true = inverted scroll direction)
+    private var naturalScrolling = false
+
     // Throttle: minimum interval between mouse reports (ms)
     private var lastSendTime = 0L
     private val throttleInterval = 8L  // ~120Hz
@@ -77,6 +83,8 @@ class TouchpadFragment : Fragment() {
     // SharedPreferences key
     private val PREFS_NAME = "settings_prefs"
     private val KEY_SENSITIVITY = "touchpad_sensitivity"
+    private val KEY_CURSOR_SPEED = "cursor_speed"
+    private val KEY_SCROLL_DIRECTION_NATURAL = "scroll_direction_natural"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -149,7 +157,7 @@ class TouchpadFragment : Fragment() {
                     // Long press triggered → enter drag mode (hold left button)
                     if (!isScrollMode) {
                         isDragging = true
-                        view?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        view?.performHapticLongPress()
                         getMouseSender()?.let { sender ->
                             Thread {
                                 sender.sendMouseMoveWithButtons(0, 0, leftButton = true)
@@ -168,7 +176,7 @@ class TouchpadFragment : Fragment() {
                         releaseDrag()
                     }
                     isScrollMode = true
-                    view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    view?.performKeyClick()
                     lastTwoFingerX = (event.getX(0) + event.getX(1)) / 2f
                     lastTwoFingerY = (event.getY(0) + event.getY(1)) / 2f
 
@@ -205,7 +213,8 @@ class TouchpadFragment : Fragment() {
                     val dy = currentY - lastTwoFingerY
 
                     // Vertical scroll (natural: swipe up = dy negative = scroll down)
-                    val vScrollAmount = (dy * sensitivity / 50).toInt().coerceIn(-5, 5)
+                    val scrollDy = if (naturalScrolling) -dy else dy
+                    val vScrollAmount = (scrollDy * sensitivity / 50).toInt().coerceIn(-5, 5)
 
                     // Horizontal scroll (inverted: swipe left = scroll right, swipe right = scroll left)
                     val hScrollAmount = (-dx * sensitivity / 50).toInt().coerceIn(-5, 5)
@@ -227,10 +236,11 @@ class TouchpadFragment : Fragment() {
                     val dx = event.x - lastX
                     val dy = event.y - lastY
 
-                    // Apply sensitivity multiplier
-                    val multiplier = sensitivity / 5f
-                    val moveX = (dx * multiplier).toInt().coerceIn(-127, 127)
-                    val moveY = (dy * multiplier).toInt().coerceIn(-127, 127)
+                    // Apply sensitivity and cursor speed multipliers
+                    val sensitivityMultiplier = sensitivity / 5f
+                    val speedMultiplier = cursorSpeed / 5f
+                    val moveX = (dx * sensitivityMultiplier * speedMultiplier).toInt().coerceIn(-127, 127)
+                    val moveY = (dy * sensitivityMultiplier * speedMultiplier).toInt().coerceIn(-127, 127)
 
                     if (moveX != 0 || moveY != 0) {
                         getMouseSender()?.let { sender ->
@@ -269,12 +279,12 @@ class TouchpadFragment : Fragment() {
                             getMouseSender()?.let { sender ->
                                 Thread { sender.sendMouseClick(MouseReport.BUTTON_RIGHT) }.start()
                             }
-                            view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            view?.performKeyClick()
                         }
                     }
                     // Haptic feedback for scroll lift (skip if already triggered by tap)
                     if (!isTap) {
-                        view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        view?.performKeyClick()
                     }
                     isTwoFingerGesture = false
                 }
@@ -297,7 +307,7 @@ class TouchpadFragment : Fragment() {
                         getMouseSender()?.let { sender ->
                             Thread { sender.sendMouseClick(MouseReport.BUTTON_LEFT) }.start()
                         }
-                        view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        view?.performKeyClick()
                     }
                 }
                 isScrollMode = false
@@ -332,6 +342,8 @@ class TouchpadFragment : Fragment() {
     private fun loadSensitivity() {
         val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         sensitivity = prefs.getInt(KEY_SENSITIVITY, 5)
+        cursorSpeed = prefs.getInt(KEY_CURSOR_SPEED, 5)
+        naturalScrolling = prefs.getBoolean(KEY_SCROLL_DIRECTION_NATURAL, false)
         view?.findViewById<Slider>(R.id.slider_sensitivity)?.value = sensitivity.toFloat()
     }
 
@@ -354,5 +366,9 @@ class TouchpadFragment : Fragment() {
             touchpadArea.isEnabled = enabled
             touchpadArea.alpha = if (enabled) 1.0f else 0.4f
         }
+    }
+
+    fun reloadSettings() {
+        loadSensitivity()
     }
 }
