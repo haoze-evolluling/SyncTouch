@@ -421,6 +421,7 @@ class MainActivity : AppCompatActivity() {
             cardTitle.setRenderEffect(
                 RenderEffect.createBlurEffect(25f, 25f, Shader.TileMode.CLAMP)
             )
+            cardTitle.setBackgroundColor(0x88F0F0F5.toInt())
         }
 
         val rvSettings = findViewById<RecyclerView>(R.id.rv_settings)
