@@ -39,12 +39,12 @@ class CircularDpadView @JvmOverloads constructor(
 
     private var outerRadius: Float = 0f
     private var innerRadius: Float = 0f
-    private var ringColor: Int = Color.parseColor("#E8E8E8")
-    private var ringBorderColor: Int = Color.parseColor("#D0D0D0")
-    private var centerColor: Int = Color.parseColor("#E8E8E8")
-    private var centerBorderColor: Int = Color.parseColor("#D0D0D0")
-    private var dividerColor: Int = Color.parseColor("#D0D0D0")
-    private var iconColor: Int = Color.parseColor("#6A6E7C")
+    private var ringColor: Int = 0
+    private var ringBorderColor: Int = 0
+    private var centerColor: Int = 0
+    private var centerBorderColor: Int = 0
+    private var dividerColor: Int = 0
+    private var iconColor: Int = 0
     private var textColor: Int = 0
 
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -79,14 +79,21 @@ class CircularDpadView @JvmOverloads constructor(
             outerRadius = a.getDimension(R.styleable.CircularDpadView_outerRadius, 90f)
             innerRadius = a.getDimension(R.styleable.CircularDpadView_innerRadius, 32f)
             repeatDelay = a.getInteger(R.styleable.CircularDpadView_repeatDelay, 200).toLong()
-            ringColor = a.getColor(R.styleable.CircularDpadView_ringColor, ringColor)
-            ringBorderColor = a.getColor(R.styleable.CircularDpadView_ringBorderColor, ringBorderColor)
-            centerColor = a.getColor(R.styleable.CircularDpadView_centerColor, centerColor)
-            centerBorderColor = a.getColor(R.styleable.CircularDpadView_centerBorderColor, centerBorderColor)
-            dividerColor = a.getColor(R.styleable.CircularDpadView_dividerColor, dividerColor)
-            iconColor = a.getColor(R.styleable.CircularDpadView_iconColor, iconColor)
+            ringColor = a.getColor(R.styleable.CircularDpadView_ringColor, resolveColor(R.attr.colorSurfaceVariant, Color.parseColor("#E8E8E8")))
+            ringBorderColor = a.getColor(R.styleable.CircularDpadView_ringBorderColor, resolveColor(R.attr.colorOutlineVariant, Color.parseColor("#D0D0D0")))
+            centerColor = a.getColor(R.styleable.CircularDpadView_centerColor, resolveColor(R.attr.colorSurface, Color.parseColor("#E8E8E8")))
+            centerBorderColor = a.getColor(R.styleable.CircularDpadView_centerBorderColor, resolveColor(R.attr.colorOutline, Color.parseColor("#D0D0D0")))
+            dividerColor = a.getColor(R.styleable.CircularDpadView_dividerColor, resolveColor(R.attr.colorOutlineVariant, Color.parseColor("#D0D0D0")))
+            iconColor = a.getColor(R.styleable.CircularDpadView_iconColor, resolveColor(R.attr.colorOnSurface, Color.parseColor("#6A6E7C")))
             textColor = a.getColor(R.styleable.CircularDpadView_textColor, textColor)
             a.recycle()
+        } ?: run {
+            ringColor = resolveColor(R.attr.colorSurfaceVariant, Color.parseColor("#E8E8E8"))
+            ringBorderColor = resolveColor(R.attr.colorOutlineVariant, Color.parseColor("#D0D0D0"))
+            centerColor = resolveColor(R.attr.colorSurface, Color.parseColor("#E8E8E8"))
+            centerBorderColor = resolveColor(R.attr.colorOutline, Color.parseColor("#D0D0D0"))
+            dividerColor = resolveColor(R.attr.colorOutlineVariant, Color.parseColor("#D0D0D0"))
+            iconColor = resolveColor(R.attr.colorOnSurface, Color.parseColor("#6A6E7C"))
         }
 
         if (textColor == 0) {
@@ -97,6 +104,15 @@ class CircularDpadView @JvmOverloads constructor(
 
         setupPaints()
         setupIcons()
+    }
+
+    private fun resolveColor(attr: Int, fallback: Int): Int {
+        val tv = TypedValue()
+        return if (context.theme.resolveAttribute(attr, tv, true)) {
+            if (tv.resourceId != 0) ContextCompat.getColor(context, tv.resourceId) else tv.data
+        } else {
+            fallback
+        }
     }
 
     private fun setupPaints() {
