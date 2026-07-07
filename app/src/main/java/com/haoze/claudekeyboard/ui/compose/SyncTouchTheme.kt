@@ -1,5 +1,8 @@
 package com.haoze.claudekeyboard.ui.compose
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -8,8 +11,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowInsetsControllerCompat
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF315CFF),
@@ -76,15 +83,40 @@ fun SyncTouchTheme(
 ) {
     val darkTheme = isSystemInDarkTheme()
     val context = LocalContext.current
+    val view = LocalView.current
     val colors = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && darkTheme -> dynamicDarkColorScheme(context)
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> dynamicLightColorScheme(context)
         darkTheme -> DarkColors
         else -> LightColors
     }
+    val surfaceColor = colors.surface.toArgb()
+
+    SideEffect {
+        context.findActivity()?.window?.let { window ->
+            window.statusBarColor = surfaceColor
+            window.navigationBarColor = surfaceColor
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                window.isNavigationBarContrastEnforced = false
+            }
+            WindowInsetsControllerCompat(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+        view.rootView.setBackgroundColor(surfaceColor)
+    }
 
     MaterialTheme(
         colorScheme = colors,
         content = content
     )
+}
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 }

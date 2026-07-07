@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="4dp"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="?attr/colorSurfaceContainer"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:strokeColor="?attr/colorOutlineVariant"
-    app:strokeWidth="1dp">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,7 +17,7 @@
             android:gravity="center_vertical"
             android:minHeight="72dp"
             android:orientation="horizontal"
-            android:paddingHorizontal="14dp"
+            android:paddingHorizontal="16dp"
             android:paddingVertical="12dp">
 
             <FrameLayout
@@ -115,4 +109,10 @@
 
     </LinearLayout>
 
-</com.google.android.material.card.MaterialCardView>
+    <View
+        android:id="@+id/device_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/home_card_stroke" />
+
+</LinearLayout>

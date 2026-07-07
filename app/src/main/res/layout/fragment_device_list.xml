@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/colorSurfaceContainer"
+    android:background="@drawable/bg_device_sheet"
     android:orientation="vertical"
     android:paddingBottom="20dp">
 
@@ -20,7 +21,7 @@
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="20dp"
         android:text="@string/device_list_title"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textAppearance="?attr/textAppearanceTitleLarge"
         android:textColor="?attr/colorOnSurface" />
 
     <TextView
@@ -46,12 +47,25 @@
         android:textColor="?attr/colorOnSurfaceVariant"
         android:visibility="gone" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_devices"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/device_list_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clipToPadding="false"
-        android:maxHeight="400dp"
-        android:paddingBottom="4dp" />
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="2dp"
+        app:cardBackgroundColor="@color/home_card"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/home_card_stroke"
+        app:strokeWidth="1dp">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_devices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:maxHeight="400dp" />
+
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>

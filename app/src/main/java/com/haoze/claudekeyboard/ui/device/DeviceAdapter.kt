@@ -49,7 +49,7 @@ class DeviceAdapter(
     }
 
     override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
-        holder.bind(devices[position])
+        holder.bind(devices[position], position == devices.lastIndex)
     }
 
     override fun getItemCount(): Int = devices.size
@@ -59,11 +59,13 @@ class DeviceAdapter(
         private val tvAddress: TextView = itemView.findViewById(R.id.tv_device_address)
         private val tvStatus: TextView = itemView.findViewById(R.id.tv_device_status)
         private val tvDisconnect: TextView = itemView.findViewById(R.id.tv_device_disconnect)
+        private val divider: View = itemView.findViewById(R.id.device_divider)
         private val progressConnecting: LinearProgressIndicator = itemView.findViewById(R.id.progress_connecting)
 
-        fun bind(device: BluetoothDevice) {
+        fun bind(device: BluetoothDevice, isLastItem: Boolean) {
             tvName.text = device.name ?: itemView.context.getString(R.string.status_unknown_device)
             tvAddress.text = device.address
+            divider.visibility = if (isLastItem) View.GONE else View.VISIBLE
 
             val isConnecting = device.address == connectingAddress
 

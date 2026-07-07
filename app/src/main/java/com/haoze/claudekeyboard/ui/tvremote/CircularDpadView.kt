@@ -107,6 +107,34 @@ class CircularDpadView @JvmOverloads constructor(
         setupIcons()
     }
 
+    fun configureStyle(
+        outerRadius: Float,
+        innerRadius: Float,
+        repeatDelay: Long,
+        ringColor: Int,
+        ringBorderColor: Int,
+        centerColor: Int,
+        centerBorderColor: Int,
+        dividerColor: Int,
+        iconColor: Int,
+        textColor: Int
+    ) {
+        this.outerRadius = outerRadius
+        this.innerRadius = innerRadius
+        this.repeatDelay = repeatDelay
+        this.ringColor = ringColor
+        this.ringBorderColor = ringBorderColor
+        this.centerColor = centerColor
+        this.centerBorderColor = centerBorderColor
+        this.dividerColor = dividerColor
+        this.iconColor = iconColor
+        this.textColor = textColor
+        setupPaints()
+        setupIcons()
+        requestLayout()
+        invalidate()
+    }
+
     private fun resolveColor(attr: Int, fallback: Int): Int {
         val tv = TypedValue()
         return if (context.theme.resolveAttribute(attr, tv, true)) {

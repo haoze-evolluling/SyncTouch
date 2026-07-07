@@ -1,9 +1,6 @@
 package com.haoze.claudekeyboard.ui.compose
 
 import android.content.Context
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.ImageButton
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +40,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,13 +48,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.macro.Macro
-import com.haoze.claudekeyboard.ui.tvremote.CircularDpadView
-import com.haoze.claudekeyboard.util.performKeyClick
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 enum class AppPage {
     HOME,
@@ -478,101 +469,6 @@ private fun MacroSettingsItem(
             onClick = onClick,
             onLongClick = onLongClick
         )
-    )
-}
-
-@Composable
-private fun TvRemoteScreen(
-    enabled: Boolean,
-    onBack: () -> Unit,
-    onAction: (TvRemoteAction) -> Unit
-) {
-    val scope = rememberCoroutineScope()
-    var ledActive by remember { mutableStateOf(false) }
-
-    fun runAction(action: TvRemoteAction) {
-        if (!enabled) return
-        ledActive = true
-        onAction(action)
-        scope.launch {
-            delay(150)
-            ledActive = false
-        }
-    }
-
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { context ->
-            LayoutInflater.from(context).inflate(R.layout.fragment_tvremote, null, false)
-        },
-        update = { root ->
-            root.findViewById<ImageButton>(R.id.btn_back_to_home)?.setOnClickListener {
-                it.performKeyClick()
-                onBack()
-            }
-
-            val ledIndicator = root.findViewById<View>(R.id.led_indicator)
-            ledIndicator?.setBackgroundResource(
-                if (ledActive) R.drawable.bg_led_dot_active else R.drawable.bg_led_dot
-            )
-
-            root.findViewById<CircularDpadView>(R.id.circular_dpad)?.let { dpad ->
-                dpad.alpha = if (enabled) 1f else 0.4f
-                dpad.dpadEnabled = enabled
-                dpad.onDirectionListener = object : CircularDpadView.OnDirectionListener {
-                    override fun onDirection(direction: CircularDpadView.Direction) {
-                        runAction(
-                            when (direction) {
-                                CircularDpadView.Direction.UP -> TvRemoteAction.UP
-                                CircularDpadView.Direction.DOWN -> TvRemoteAction.DOWN
-                                CircularDpadView.Direction.LEFT -> TvRemoteAction.LEFT
-                                CircularDpadView.Direction.RIGHT -> TvRemoteAction.RIGHT
-                            }
-                        )
-                    }
-                }
-                dpad.onConfirmListener = { runAction(TvRemoteAction.CONFIRM) }
-            }
-
-            fun bindButton(id: Int, action: TvRemoteAction) {
-                root.findViewById<View>(id)?.setOnClickListener {
-                    it.performKeyClick()
-                    runAction(action)
-                }
-            }
-
-            bindButton(R.id.btn_back, TvRemoteAction.BACK)
-            bindButton(R.id.btn_assistant, TvRemoteAction.ASSISTANT)
-            bindButton(R.id.btn_home, TvRemoteAction.HOME)
-            bindButton(R.id.btn_mute, TvRemoteAction.MUTE)
-            bindButton(R.id.btn_volume_up, TvRemoteAction.VOLUME_UP)
-            bindButton(R.id.btn_volume_down, TvRemoteAction.VOLUME_DOWN)
-            bindButton(R.id.btn_power, TvRemoteAction.POWER)
-            bindButton(R.id.btn_previous, TvRemoteAction.PREVIOUS)
-            bindButton(R.id.btn_play_pause, TvRemoteAction.PLAY_PAUSE)
-            bindButton(R.id.btn_next, TvRemoteAction.NEXT)
-            bindButton(R.id.btn_stop, TvRemoteAction.STOP)
-
-            listOf(
-                R.id.btn_back,
-                R.id.btn_assistant,
-                R.id.btn_home,
-                R.id.btn_mute,
-                R.id.btn_power,
-                R.id.btn_volume_stack,
-                R.id.btn_volume_up,
-                R.id.btn_volume_down,
-                R.id.btn_previous,
-                R.id.btn_play_pause,
-                R.id.btn_next,
-                R.id.btn_stop
-            ).forEach { id ->
-                root.findViewById<View>(id)?.let { view ->
-                    view.isEnabled = enabled
-                    view.alpha = if (enabled) 1f else 0.4f
-                }
-            }
-        }
     )
 }
 

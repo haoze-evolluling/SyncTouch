@@ -3,6 +3,8 @@ package com.haoze.claudekeyboard.ui.device
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
@@ -20,7 +22,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.util.fixM3Background
-import com.haoze.claudekeyboard.util.resolveAttrColor
 
 /**
  * BottomSheet dialog showing paired Bluetooth devices for connection.
@@ -67,15 +68,22 @@ class DeviceListBottomSheetFragment : BottomSheetDialogFragment() {
     override fun onStart() {
         super.onStart()
         val dlg = dialog ?: return
-        val bgColor = requireContext().resolveAttrColor(com.google.android.material.R.attr.colorSurfaceContainer)
-        val cornerRadius = 12f * resources.displayMetrics.density // 12dp in pixels
+        val bgColor = ContextCompat.getColor(requireContext(), R.color.surface)
+        val cornerRadius = 20f * resources.displayMetrics.density
+        dlg.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         // Fix bottom sheet background only (not the entire window)
         dlg.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { sheet ->
             sheet.background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 setColor(bgColor)
-                this.cornerRadius = cornerRadius
+                cornerRadii = floatArrayOf(
+                    cornerRadius, cornerRadius,
+                    cornerRadius, cornerRadius,
+                    0f, 0f,
+                    0f, 0f
+                )
             }
+            sheet.clipToOutline = true
         }
     }
 
@@ -113,6 +121,7 @@ class DeviceListBottomSheetFragment : BottomSheetDialogFragment() {
         val tvTitle = view.findViewById<TextView>(R.id.tv_device_list_title)
         val tvEmpty = view.findViewById<TextView>(R.id.tv_device_empty)
         val recyclerView = view.findViewById<RecyclerView>(R.id.rv_devices)
+        val deviceListCard = view.findViewById<View>(R.id.device_list_card)
 
         tvTitle.text = getString(R.string.device_list_title)
 
@@ -144,7 +153,7 @@ class DeviceListBottomSheetFragment : BottomSheetDialogFragment() {
         if (!hasPermission) {
             tvEmpty.text = getString(R.string.toast_permission_denied)
             tvEmpty.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
+            deviceListCard.visibility = View.GONE
             return
         }
 
@@ -154,16 +163,16 @@ class DeviceListBottomSheetFragment : BottomSheetDialogFragment() {
 
             if (bondedDevices.isEmpty()) {
                 tvEmpty.visibility = View.VISIBLE
-                recyclerView.visibility = View.GONE
+                deviceListCard.visibility = View.GONE
             } else {
                 tvEmpty.visibility = View.GONE
-                recyclerView.visibility = View.VISIBLE
+                deviceListCard.visibility = View.VISIBLE
                 adapter?.updateDevices(bondedDevices, connectedAddress, lastConnectedAddress)
             }
         } catch (e: SecurityException) {
             tvEmpty.text = getString(R.string.toast_permission_denied)
             tvEmpty.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
+            deviceListCard.visibility = View.GONE
         }
     }
 
