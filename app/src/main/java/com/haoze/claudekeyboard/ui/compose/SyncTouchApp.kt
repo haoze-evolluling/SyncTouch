@@ -1,6 +1,8 @@
 package com.haoze.claudekeyboard.ui.compose
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,11 +11,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -47,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.macro.Macro
@@ -239,6 +244,7 @@ private fun HomeScaffold(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -403,17 +409,7 @@ private fun AgentScreen(
 
             SettingsGroupTitle(stringResource(R.string.home_agent_title))
             SettingsGroup {
-                CoreCommandRow(stringResource(R.string.btn_yes), Icons.Default.Check) { onCoreCommand(CoreCommand.YES) }
-                SettingsDivider()
-                CoreCommandRow(stringResource(R.string.btn_yes_to_all), Icons.Default.Check) { onCoreCommand(CoreCommand.YES_TO_ALL) }
-                SettingsDivider()
-                CoreCommandRow(stringResource(R.string.btn_no), Icons.Default.PowerSettingsNew, MaterialTheme.colorScheme.error) { onCoreCommand(CoreCommand.NO) }
-                SettingsDivider()
-                CoreCommandRow(stringResource(R.string.btn_ctrl_c), Icons.Default.Keyboard) { onCoreCommand(CoreCommand.CTRL_C) }
-                SettingsDivider()
-                CoreCommandRow(stringResource(R.string.btn_backspace), Icons.Default.Keyboard, MaterialTheme.colorScheme.error) { onCoreCommand(CoreCommand.BACKSPACE) }
-                SettingsDivider()
-                CoreCommandRow(stringResource(R.string.btn_enter), Icons.Default.Keyboard) { onCoreCommand(CoreCommand.ENTER) }
+                CoreCommandGrid(onCoreCommand = onCoreCommand)
             }
 
             SettingsGroupTitle(stringResource(R.string.macro_list_title))
@@ -438,20 +434,96 @@ private fun AgentScreen(
     }
 }
 
+private data class CoreCommandSpec(
+    val title: String,
+    val icon: ImageVector,
+    val color: Color,
+    val command: CoreCommand
+)
+
 @Composable
-private fun CoreCommandRow(
-    title: String,
-    icon: ImageVector,
-    color: Color = MaterialTheme.colorScheme.primary,
+private fun CoreCommandGrid(
+    onCoreCommand: (CoreCommand) -> Unit
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val error = MaterialTheme.colorScheme.error
+    val commands = listOf(
+        CoreCommandSpec(stringResource(R.string.btn_yes), Icons.Default.Check, primary, CoreCommand.YES),
+        CoreCommandSpec(stringResource(R.string.btn_yes_to_all), Icons.Default.Check, primary, CoreCommand.YES_TO_ALL),
+        CoreCommandSpec(stringResource(R.string.btn_no), Icons.Default.PowerSettingsNew, error, CoreCommand.NO),
+        CoreCommandSpec(stringResource(R.string.btn_ctrl_c), Icons.Default.Keyboard, primary, CoreCommand.CTRL_C),
+        CoreCommandSpec(stringResource(R.string.btn_backspace), Icons.Default.Keyboard, error, CoreCommand.BACKSPACE),
+        CoreCommandSpec(stringResource(R.string.btn_enter), Icons.Default.Keyboard, primary, CoreCommand.ENTER)
+    )
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        commands.chunked(2).forEachIndexed { rowIndex, rowCommands ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                CoreCommandTile(
+                    spec = rowCommands[0],
+                    modifier = Modifier.weight(1f),
+                    onClick = { onCoreCommand(rowCommands[0].command) }
+                )
+                if (rowCommands.size == 1) {
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    CoreCommandVerticalDivider()
+                    CoreCommandTile(
+                        spec = rowCommands[1],
+                        modifier = Modifier.weight(1f),
+                        onClick = { onCoreCommand(rowCommands[1].command) }
+                    )
+                }
+            }
+            if (rowIndex < commands.lastIndex / 2) {
+                SettingsDivider()
+            }
+        }
+    }
+}
+
+@Composable
+private fun CoreCommandTile(
+    spec: CoreCommandSpec,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    SettingsTextItem(
-        title = title,
-        textColor = color,
-        onClick = onClick,
-        trailing = {
-            Icon(icon, contentDescription = null, tint = color)
-        }
+    Row(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = spec.title,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyLarge,
+            color = spec.color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = spec.icon,
+            contentDescription = null,
+            tint = spec.color,
+            modifier = Modifier.size(22.dp)
+        )
+    }
+}
+
+@Composable
+private fun CoreCommandVerticalDivider() {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.outlineVariant)
     )
 }
 
@@ -539,7 +611,7 @@ private fun SettingsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_home_group))
+            SettingsGroupTitle(stringResource(R.string.settings_group_connect_control))
             SettingsGroup {
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_connection),
@@ -561,7 +633,10 @@ private fun SettingsHomeScreen(
                     value = boolSummary(prefs.getBoolean("haptic_feedback", true)),
                     onClick = { onNavigate(AppPage.SETTINGS_INTERACTION) }
                 )
-                SettingsDivider()
+            }
+
+            SettingsGroupTitle(stringResource(R.string.settings_group_experience))
+            SettingsGroup {
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_appearance),
                     subtitle = stringResource(R.string.settings_summary_appearance),
@@ -574,7 +649,10 @@ private fun SettingsHomeScreen(
                     subtitle = stringResource(R.string.settings_summary_data),
                     onClick = { onNavigate(AppPage.SETTINGS_DATA) }
                 )
-                SettingsDivider()
+            }
+
+            SettingsGroupTitle(stringResource(R.string.settings_group_information))
+            SettingsGroup {
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_about),
                     subtitle = stringResource(R.string.settings_summary_about),
@@ -814,6 +892,9 @@ private fun AboutSettingsScreen(
     onBack: () -> Unit,
     versionName: String
 ) {
+    val context = LocalContext.current
+    val githubUrl = stringResource(R.string.settings_github_url)
+
     SettingsScaffold(title = stringResource(R.string.settings_section_about), onBack = onBack) { innerPadding ->
         Column(
             modifier = Modifier
@@ -834,8 +915,12 @@ private fun AboutSettingsScreen(
                 )
                 SettingsDivider()
                 SettingsTextItem(
-                    title = stringResource(R.string.settings_open_source),
-                    subtitle = stringResource(R.string.settings_about_license_subtitle)
+                    title = stringResource(R.string.settings_github_repo),
+                    subtitle = githubUrl,
+                    textColor = MaterialTheme.colorScheme.primary,
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(githubUrl)))
+                    }
                 )
             }
         }

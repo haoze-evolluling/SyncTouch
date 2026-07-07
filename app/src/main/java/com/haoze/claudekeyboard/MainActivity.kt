@@ -37,6 +37,7 @@ import com.haoze.claudekeyboard.ui.device.DeviceListBottomSheetFragment
 import com.haoze.claudekeyboard.ui.keyboard.KeyboardFragment
 import com.haoze.claudekeyboard.ui.macro.MacroEditDialogFragment
 import com.haoze.claudekeyboard.ui.touchpad.TouchpadFragment
+import com.haoze.claudekeyboard.util.dynamicSurfaceColor
 import com.haoze.claudekeyboard.util.fixM3Background
 
 class MainActivity : AppCompatActivity() {
@@ -93,6 +94,7 @@ class MainActivity : AppCompatActivity() {
 
         macroRepository = MacroRepository(this)
         initViews()
+        applyDynamicViewBackgrounds()
         setupWindowInsets()
         setupComposeContent()
         loadMacros()
@@ -164,6 +166,13 @@ class MainActivity : AppCompatActivity() {
         contentTouchpad = findViewById(R.id.content_touchpad)
     }
 
+    private fun applyDynamicViewBackgrounds() {
+        val surfaceColor = dynamicSurfaceColor()
+        findViewById<View>(R.id.main).setBackgroundColor(surfaceColor)
+        contentKeyboard.setBackgroundColor(surfaceColor)
+        contentTouchpad.setBackgroundColor(surfaceColor)
+    }
+
     private fun setupWindowInsets() {
         val mainView = findViewById<View>(R.id.main)
         ViewCompat.setOnApplyWindowInsetsListener(mainView) { v, insets ->
@@ -173,7 +182,9 @@ class MainActivity : AppCompatActivity() {
             val left = maxOf(systemBars.left, cutout?.safeInsetLeft ?: 0)
             val top = maxOf(systemBars.top, cutout?.safeInsetTop ?: 0)
             val right = maxOf(systemBars.right, cutout?.safeInsetRight ?: 0)
-            v.setPadding(left, top, right, 0)
+            v.setPadding(left, 0, right, 0)
+            contentKeyboard.setPadding(0, top, 0, 0)
+            contentTouchpad.setPadding(0, top, 0, 0)
             insets
         }
     }

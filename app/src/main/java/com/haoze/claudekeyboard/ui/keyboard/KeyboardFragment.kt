@@ -1,6 +1,7 @@
 package com.haoze.claudekeyboard.ui.keyboard
 
 import android.annotation.SuppressLint
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -18,8 +19,9 @@ import com.haoze.claudekeyboard.MainActivity
 import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.bluetooth.BluetoothViewModel
 import com.haoze.claudekeyboard.bluetooth.KeyboardSender
+import com.haoze.claudekeyboard.util.DynamicViewColors
+import com.haoze.claudekeyboard.util.dynamicViewColors
 import com.haoze.claudekeyboard.util.performKeyClick
-import com.haoze.claudekeyboard.util.resolveAttrColor
 
 /**
  * Full QWERTY keyboard fragment for Bluetooth HID input.
@@ -44,6 +46,7 @@ class KeyboardFragment : Fragment() {
     private var altRightButton: TextView? = null
     private var winLeftButton: TextView? = null
     private var winRightButton: TextView? = null
+    private lateinit var viewColors: DynamicViewColors
 
     // All key buttons for shift label updates
     private val allKeyButtons = mutableMapOf<TextView, KeyData>()
@@ -164,6 +167,8 @@ class KeyboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewColors = requireContext().dynamicViewColors()
+        view.setBackgroundColor(viewColors.surface)
         buildKeyboard(view)
     }
 
@@ -219,7 +224,7 @@ class KeyboardFragment : Fragment() {
                         when (event.action) {
                             MotionEvent.ACTION_DOWN -> {
                                 v.performKeyClick()
-                                button.setBackgroundResource(R.drawable.bg_key_pressed)
+                                button.background = keyPressedBackground()
                                 v.isPressed = true
                                 true
                             }
@@ -245,7 +250,7 @@ class KeyboardFragment : Fragment() {
                             MotionEvent.ACTION_DOWN -> {
                                 v.performKeyClick()
                                 isKeyPressed = true
-                                button.setBackgroundResource(R.drawable.bg_key_pressed)
+                                button.background = keyPressedBackground()
                                 v.isPressed = true
 
                                 // Build effective key code and modifier once for this press and all repeats
@@ -288,7 +293,7 @@ class KeyboardFragment : Fragment() {
                                 isKeyPressed = false
                                 repeatRunnable?.let { handler.removeCallbacks(it) }
                                 repeatRunnable = null
-                                button.setBackgroundResource(R.drawable.bg_key_normal)
+                                button.background = keyNormalBackground()
                                 v.isPressed = false
                                 true
                             }
@@ -313,14 +318,14 @@ class KeyboardFragment : Fragment() {
     ): TextView {
         val button = TextView(requireContext()).apply {
             gravity = Gravity.CENTER
-            setBackgroundResource(R.drawable.bg_key_normal)
+            background = keyNormalBackground()
             isClickable = true
             isFocusable = false
         }
 
         // Set text appearance
         button.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize)
-        button.setTextColor(requireContext().resolveAttrColor(com.google.android.material.R.attr.colorOnSurface))
+        button.setTextColor(viewColors.onSurface)
 
         // Set label
         updateKeyLabel(button, keyData, shiftTextSize)
@@ -415,52 +420,73 @@ class KeyboardFragment : Fragment() {
      * Update modifier button visual states.
      */
     private fun updateModifierVisuals() {
-        val activeBg = R.drawable.bg_key_modifier_active
-        val normalBg = R.drawable.bg_key_normal
-
-        val activeTextColor = requireContext().resolveAttrColor(com.google.android.material.R.attr.colorOnPrimary)
-        val normalTextColor = requireContext().resolveAttrColor(com.google.android.material.R.attr.colorOnSurface)
+        val activeTextColor = viewColors.onPrimary
+        val normalTextColor = viewColors.onSurface
 
         // Left Shift buttons (fire-and-forget, no persistent state)
         for (btn in leftShiftButtons) {
-            btn.setBackgroundResource(normalBg)
+            btn.background = keyNormalBackground()
             btn.setTextColor(normalTextColor)
         }
 
         // Right Shift buttons (symbol lock toggle)
         for (btn in rightShiftButtons) {
-            btn.setBackgroundResource(if (isSymbolLock) activeBg else normalBg)
+            btn.background = if (isSymbolLock) keyActiveBackground() else keyNormalBackground()
             btn.setTextColor(if (isSymbolLock) activeTextColor else normalTextColor)
         }
 
         // Ctrl buttons (left = toggle, right = fire-and-forget)
         for (btn in ctrlLeftButtons) {
-            btn.setBackgroundResource(if (isCtrlLeftActive) activeBg else normalBg)
+            btn.background = if (isCtrlLeftActive) keyActiveBackground() else keyNormalBackground()
             btn.setTextColor(if (isCtrlLeftActive) activeTextColor else normalTextColor)
         }
         for (btn in ctrlRightButtons) {
-            btn.setBackgroundResource(normalBg)
+            btn.background = keyNormalBackground()
             btn.setTextColor(normalTextColor)
         }
 
         // Alt buttons (left = toggle, right = fire-and-forget)
         altLeftButton?.let {
-            it.setBackgroundResource(if (isAltLeftActive) activeBg else normalBg)
+            it.background = if (isAltLeftActive) keyActiveBackground() else keyNormalBackground()
             it.setTextColor(if (isAltLeftActive) activeTextColor else normalTextColor)
         }
         altRightButton?.let {
-            it.setBackgroundResource(normalBg)
+            it.background = keyNormalBackground()
             it.setTextColor(normalTextColor)
         }
 
         // Win buttons (independent)
         winLeftButton?.let {
-            it.setBackgroundResource(normalBg)
+            it.background = keyNormalBackground()
             it.setTextColor(normalTextColor)
         }
         winRightButton?.let {
-            it.setBackgroundResource(if (isWinRightActive) activeBg else normalBg)
+            it.background = if (isWinRightActive) keyActiveBackground() else keyNormalBackground()
             it.setTextColor(if (isWinRightActive) activeTextColor else normalTextColor)
+        }
+    }
+
+    private fun keyNormalBackground(): GradientDrawable {
+        return roundedKeyDrawable(viewColors.surfaceContainer, viewColors.outlineVariant)
+    }
+
+    private fun keyPressedBackground(): GradientDrawable {
+        return roundedKeyDrawable(viewColors.primaryContainer, viewColors.primary)
+    }
+
+    private fun keyActiveBackground(): GradientDrawable {
+        return roundedKeyDrawable(viewColors.primary, null)
+    }
+
+    private fun roundedKeyDrawable(fillColor: Int, strokeColor: Int?): GradientDrawable {
+        val strokeWidth = (resources.displayMetrics.density).toInt().coerceAtLeast(1)
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = resources.getDimension(R.dimen.keyboard_key_corner_radius)
+            setColor(fillColor)
+            if (strokeColor != null) {
+                setStroke(strokeWidth, strokeColor)
+            }
         }
     }
 

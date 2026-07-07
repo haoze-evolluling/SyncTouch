@@ -53,8 +53,8 @@
         <item name="colorOnErrorContainer">@color/on_error_container</item>
 
         <!-- Surface & Background -->
-        <item name="android:colorBackground">@color/surface</item>
-        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:colorBackground">?attr/colorSurface</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorSurfaceContainerLow">@color/surface_container_low</item>
         <item name="colorSurfaceContainer">@color/surface_container</item>
@@ -68,8 +68,8 @@
         <item name="colorOutlineVariant">@color/outline_variant</item>
 
         <!-- Status & navigation bars -->
-        <item name="android:statusBarColor">@color/surface</item>
-        <item name="android:navigationBarColor">@color/surface</item>
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
 
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>

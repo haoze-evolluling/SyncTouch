@@ -15,19 +15,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
-            android:minHeight="72dp"
+            android:minHeight="60dp"
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="12dp">
+            android:paddingVertical="10dp">
 
             <FrameLayout
-                android:layout_width="42dp"
-                android:layout_height="42dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
                 android:background="@drawable/bg_device_icon">
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:layout_gravity="center"
                     android:src="@drawable/baseline_bluetooth_24"
                     app:tint="?attr/colorPrimary" />
@@ -37,7 +37,7 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -54,19 +54,20 @@
                         android:ellipsize="end"
                         android:maxWidth="160dp"
                         android:maxLines="1"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorOnSurface" />
 
                     <TextView
                         android:id="@+id/tv_device_status"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="6dp"
                         android:background="@drawable/bg_device_status_badge"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="3dp"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
                         android:textAppearance="?attr/textAppearanceLabelSmall"
                         android:textColor="?attr/colorOnPrimaryContainer"
+                        android:textSize="10sp"
                         android:visibility="gone" />
 
                 </LinearLayout>
@@ -76,7 +77,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>

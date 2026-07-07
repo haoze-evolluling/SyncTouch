@@ -2,6 +2,7 @@ package com.haoze.claudekeyboard.ui.touchpad
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -19,6 +20,8 @@ import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.bluetooth.BluetoothViewModel
 import com.haoze.claudekeyboard.bluetooth.MouseReport
 import com.haoze.claudekeyboard.bluetooth.MouseSender
+import com.haoze.claudekeyboard.util.DynamicViewColors
+import com.haoze.claudekeyboard.util.dynamicViewColors
 import com.haoze.claudekeyboard.util.performHapticLongPress
 import com.haoze.claudekeyboard.util.performKeyClick
 import kotlin.math.sqrt
@@ -91,6 +94,7 @@ class TouchpadFragment : Fragment() {
     private val KEY_SENSITIVITY = "touchpad_sensitivity"
     private val KEY_CURSOR_SPEED = "cursor_speed"
     private val KEY_SCROLL_DIRECTION_NATURAL = "scroll_direction_natural"
+    private lateinit var viewColors: DynamicViewColors
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -102,6 +106,8 @@ class TouchpadFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewColors = requireContext().dynamicViewColors()
+        view.setBackgroundColor(viewColors.surface)
         setupViews(view)
         loadSensitivity()
     }
@@ -112,6 +118,12 @@ class TouchpadFragment : Fragment() {
         val toKeyboard = root.findViewById<TextView>(R.id.tv_to_keyboard)
         val slider = root.findViewById<Slider>(R.id.slider_sensitivity)
         val touchpadArea = root.findViewById<View>(R.id.touchpad_area)
+
+        touchpadArea.background = roundedPanelDrawable(viewColors.surfaceContainerLow)
+        listOf(backToHome, toKeyboard).forEach { button ->
+            button.background = roundedPanelDrawable(viewColors.surfaceContainer)
+            button.setTextColor(viewColors.onSurfaceVariant)
+        }
 
         // Back to Home button
         backToHome.text = getString(R.string.tab_claude)
@@ -398,5 +410,15 @@ class TouchpadFragment : Fragment() {
 
     fun reloadSettings() {
         loadSensitivity()
+    }
+
+    private fun roundedPanelDrawable(fillColor: Int): GradientDrawable {
+        val density = resources.displayMetrics.density
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 12f * density
+            setColor(fillColor)
+            setStroke(density.toInt().coerceAtLeast(1), viewColors.outlineVariant)
+        }
     }
 }

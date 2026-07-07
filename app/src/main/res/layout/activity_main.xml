@@ -4,7 +4,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface"
+    android:background="?attr/colorSurface"
     tools:context=".MainActivity">
 
     <androidx.compose.ui.platform.ComposeView
@@ -16,6 +16,7 @@
         android:id="@+id/content_keyboard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?attr/colorSurface"
         android:visibility="gone">
 
         <androidx.fragment.app.FragmentContainerView
@@ -30,6 +31,7 @@
         android:id="@+id/content_touchpad"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?attr/colorSurface"
         android:visibility="gone">
 
         <androidx.fragment.app.FragmentContainerView
