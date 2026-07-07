@@ -69,7 +69,8 @@ class DeviceAdapter(
 
             when {
                 isConnecting -> {
-                    tvStatus.visibility = View.GONE
+                    tvStatus.text = itemView.context.getString(R.string.device_connecting)
+                    tvStatus.visibility = View.VISIBLE
                     tvDisconnect.visibility = View.GONE
                     progressConnecting.visibility = View.VISIBLE
                     itemView.isEnabled = false
@@ -89,7 +90,7 @@ class DeviceAdapter(
                     tvDisconnect.visibility = View.VISIBLE
                     progressConnecting.visibility = View.GONE
                     itemView.isEnabled = false
-                    itemView.alpha = 0.6f
+                    itemView.alpha = 1.0f
                 }
                 device.address == lastConnectedAddress -> {
                     tvStatus.text = itemView.context.getString(R.string.device_last_connected)

@@ -55,10 +55,10 @@
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="@color/surface_container"
+            app:cardBackgroundColor="?attr/colorSurfaceContainer"
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/outline_variant"
+            app:strokeColor="?attr/colorOutlineVariant"
             app:strokeWidth="1dp">
 
             <ScrollView
@@ -100,7 +100,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:text="@string/tvremote_led_label"
-                            android:textColor="@color/primary"
+                            android:textColor="?attr/colorPrimary"
                             android:textSize="12sp" />
                     </LinearLayout>
 
@@ -129,12 +129,12 @@
                     app:outerRadius="106dp"
                     app:innerRadius="51dp"
                     app:repeatDelay="200"
-                    app:ringColor="@color/surface_container"
-                    app:ringBorderColor="@color/primary"
-                    app:centerColor="@color/surface_container"
-                    app:centerBorderColor="@color/primary"
-                    app:dividerColor="@color/primary"
-                    app:iconColor="@color/primary" />
+                    app:ringColor="?attr/colorSurfaceContainer"
+                    app:ringBorderColor="?attr/colorPrimary"
+                    app:centerColor="?attr/colorSurfaceContainer"
+                    app:centerBorderColor="?attr/colorPrimary"
+                    app:dividerColor="?attr/colorPrimary"
+                    app:iconColor="?attr/colorPrimary" />
 
                 <!-- Back + Assistant row -->
                 <LinearLayout
@@ -318,7 +318,7 @@
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="2dp"
-                            android:background="@color/outline_variant" />
+                            android:background="?attr/colorOutlineVariant" />
 
                         <LinearLayout
                             android:id="@+id/btn_volume_down"

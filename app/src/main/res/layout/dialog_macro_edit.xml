@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface_container"
+    android:background="?attr/colorSurfaceContainer"
     android:orientation="vertical"
     android:padding="24dp">
 
@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:hint="@string/dialog_macro_label"
-        app:boxStrokeColor="@color/outline_variant">
+        app:boxStrokeColor="?attr/colorOutlineVariant">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_macro_label"
@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:hint="@string/dialog_macro_description"
-        app:boxStrokeColor="@color/outline_variant">
+        app:boxStrokeColor="?attr/colorOutlineVariant">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_macro_description"
@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/dialog_macro_command"
-        app:boxStrokeColor="@color/outline_variant">
+        app:boxStrokeColor="?attr/colorOutlineVariant">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_macro_command"

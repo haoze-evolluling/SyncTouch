@@ -1,10 +1,13 @@
 package com.haoze.claudekeyboard.ui.compose
 
 import android.content.Context
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ImageButton
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mouse
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -29,11 +31,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SettingsRemote
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,17 +47,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.haoze.claudekeyboard.R
 import com.haoze.claudekeyboard.macro.Macro
 import com.haoze.claudekeyboard.ui.tvremote.CircularDpadView
+import com.haoze.claudekeyboard.util.performKeyClick
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -178,16 +178,7 @@ private fun HomeScreen(
     onNavigateTvRemote: () -> Unit,
     onNavigateSettings: () -> Unit
 ) {
-    val status = connectionStatusText(isConnected, connectedDeviceName)
-    SettingsScaffold(
-        title = stringResource(R.string.app_name),
-        onBack = null,
-        actions = {
-            IconButton(onClick = onNavigateSettings) {
-                Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.home_settings_title))
-            }
-        }
-    ) { innerPadding ->
+    HomeScaffold(onNavigateSettings = onNavigateSettings) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -195,15 +186,11 @@ private fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             SettingsGroupTitle(stringResource(R.string.home_connection_status))
-            SettingsGroup {
-                SettingsNavigationItem(
-                    title = stringResource(R.string.home_connection_status),
-                    subtitle = stringResource(R.string.home_hero_subtitle),
-                    value = status,
-                    leadingIcon = Icons.Default.Bluetooth,
-                    onClick = onShowDeviceList
-                )
-            }
+            HomeConnectionStatusCard(
+                isConnected = isConnected,
+                connectedDeviceName = connectedDeviceName,
+                onClick = onShowDeviceList
+            )
 
             SettingsGroupTitle(stringResource(R.string.home_functions))
             SettingsGroup {
@@ -246,6 +233,143 @@ private fun HomeScreen(
                 )
             }
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun HomeScaffold(
+    onNavigateSettings: () -> Unit,
+    content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
+) {
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bluetooth,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.home_hero_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onNavigateSettings) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.home_settings_title),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        content = content
+    )
+}
+
+@Composable
+private fun HomeConnectionStatusCard(
+    isConnected: Boolean,
+    connectedDeviceName: String?,
+    onClick: () -> Unit
+) {
+    val statusText = if (isConnected) {
+        stringResource(R.string.status_connected_label)
+    } else {
+        stringResource(R.string.status_not_connected)
+    }
+    val detailText = if (isConnected && connectedDeviceName != null) {
+        connectedDeviceName
+    } else {
+        stringResource(R.string.home_connection_disconnected_hint)
+    }
+    val actionText = if (isConnected) {
+        stringResource(R.string.home_connection_action_connected)
+    } else {
+        stringResource(R.string.home_connection_action_disconnected)
+    }
+    val statusColor = if (isConnected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outline
+    }
+
+    SettingsGroup(
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(statusColor, CircleShape)
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = if (isConnected) {
+                        stringResource(R.string.home_connection_connected_hint)
+                    } else {
+                        detailText
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (isConnected && connectedDeviceName != null) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = connectedDeviceName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = actionText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -376,163 +500,80 @@ private fun TvRemoteScreen(
         }
     }
 
-    SettingsScaffold(
-        title = stringResource(R.string.home_tvremote_title),
-        onBack = onBack
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            SettingsGroupTitle(stringResource(R.string.tvremote_led_label))
-            SettingsGroup {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .background(
-                                if (ledActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                                CircleShape
-                            )
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = if (enabled) stringResource(R.string.status_connected_label) else stringResource(R.string.status_not_connected),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { runAction(TvRemoteAction.POWER) }, enabled = enabled) {
-                        Icon(Icons.Default.PowerSettingsNew, contentDescription = stringResource(R.string.tvremote_power))
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { context ->
+            LayoutInflater.from(context).inflate(R.layout.fragment_tvremote, null, false)
+        },
+        update = { root ->
+            root.findViewById<ImageButton>(R.id.btn_back_to_home)?.setOnClickListener {
+                it.performKeyClick()
+                onBack()
+            }
+
+            val ledIndicator = root.findViewById<View>(R.id.led_indicator)
+            ledIndicator?.setBackgroundResource(
+                if (ledActive) R.drawable.bg_led_dot_active else R.drawable.bg_led_dot
+            )
+
+            root.findViewById<CircularDpadView>(R.id.circular_dpad)?.let { dpad ->
+                dpad.alpha = if (enabled) 1f else 0.4f
+                dpad.dpadEnabled = enabled
+                dpad.onDirectionListener = object : CircularDpadView.OnDirectionListener {
+                    override fun onDirection(direction: CircularDpadView.Direction) {
+                        runAction(
+                            when (direction) {
+                                CircularDpadView.Direction.UP -> TvRemoteAction.UP
+                                CircularDpadView.Direction.DOWN -> TvRemoteAction.DOWN
+                                CircularDpadView.Direction.LEFT -> TvRemoteAction.LEFT
+                                CircularDpadView.Direction.RIGHT -> TvRemoteAction.RIGHT
+                            }
+                        )
                     }
                 }
+                dpad.onConfirmListener = { runAction(TvRemoteAction.CONFIRM) }
             }
 
-            SettingsGroupTitle(stringResource(R.string.home_tvremote_title))
-            SettingsGroup {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp, bottom = 20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    AndroidView(
-                        modifier = Modifier
-                            .size(212.dp)
-                            .alpha(if (enabled) 1f else 0.4f),
-                        factory = { context ->
-                            CircularDpadView(context).apply {
-                                onDirectionListener = object : CircularDpadView.OnDirectionListener {
-                                    override fun onDirection(direction: CircularDpadView.Direction) {
-                                        runAction(
-                                            when (direction) {
-                                                CircularDpadView.Direction.UP -> TvRemoteAction.UP
-                                                CircularDpadView.Direction.DOWN -> TvRemoteAction.DOWN
-                                                CircularDpadView.Direction.LEFT -> TvRemoteAction.LEFT
-                                                CircularDpadView.Direction.RIGHT -> TvRemoteAction.RIGHT
-                                            }
-                                        )
-                                    }
-                                }
-                                onConfirmListener = { runAction(TvRemoteAction.CONFIRM) }
-                            }
-                        },
-                        update = { it.dpadEnabled = enabled }
-                    )
+            fun bindButton(id: Int, action: TvRemoteAction) {
+                root.findViewById<View>(id)?.setOnClickListener {
+                    it.performKeyClick()
+                    runAction(action)
                 }
-                RemoteButtonRow(
-                    left = stringResource(R.string.tvremote_back) to TvRemoteAction.BACK,
-                    right = stringResource(R.string.tvremote_assistant) to TvRemoteAction.ASSISTANT,
-                    enabled = enabled,
-                    onClick = ::runAction
-                )
-                RemoteButtonRow(
-                    left = stringResource(R.string.tvremote_home) to TvRemoteAction.HOME,
-                    right = stringResource(R.string.tvremote_mute) to TvRemoteAction.MUTE,
-                    enabled = enabled,
-                    onClick = ::runAction
-                )
-                RemoteButtonRow(
-                    left = stringResource(R.string.tvremote_volume_up) to TvRemoteAction.VOLUME_UP,
-                    right = stringResource(R.string.tvremote_volume_down) to TvRemoteAction.VOLUME_DOWN,
-                    enabled = enabled,
-                    onClick = ::runAction
-                )
-                RemoteButtonRow(
-                    left = stringResource(R.string.tvremote_previous) to TvRemoteAction.PREVIOUS,
-                    right = stringResource(R.string.tvremote_play_pause) to TvRemoteAction.PLAY_PAUSE,
-                    enabled = enabled,
-                    onClick = ::runAction
-                )
-                RemoteButtonRow(
-                    left = stringResource(R.string.tvremote_next) to TvRemoteAction.NEXT,
-                    right = stringResource(R.string.tvremote_stop) to TvRemoteAction.STOP,
-                    enabled = enabled,
-                    onClick = ::runAction
-                )
-                Spacer(Modifier.height(8.dp))
             }
-            Spacer(Modifier.height(24.dp))
+
+            bindButton(R.id.btn_back, TvRemoteAction.BACK)
+            bindButton(R.id.btn_assistant, TvRemoteAction.ASSISTANT)
+            bindButton(R.id.btn_home, TvRemoteAction.HOME)
+            bindButton(R.id.btn_mute, TvRemoteAction.MUTE)
+            bindButton(R.id.btn_volume_up, TvRemoteAction.VOLUME_UP)
+            bindButton(R.id.btn_volume_down, TvRemoteAction.VOLUME_DOWN)
+            bindButton(R.id.btn_power, TvRemoteAction.POWER)
+            bindButton(R.id.btn_previous, TvRemoteAction.PREVIOUS)
+            bindButton(R.id.btn_play_pause, TvRemoteAction.PLAY_PAUSE)
+            bindButton(R.id.btn_next, TvRemoteAction.NEXT)
+            bindButton(R.id.btn_stop, TvRemoteAction.STOP)
+
+            listOf(
+                R.id.btn_back,
+                R.id.btn_assistant,
+                R.id.btn_home,
+                R.id.btn_mute,
+                R.id.btn_power,
+                R.id.btn_volume_stack,
+                R.id.btn_volume_up,
+                R.id.btn_volume_down,
+                R.id.btn_previous,
+                R.id.btn_play_pause,
+                R.id.btn_next,
+                R.id.btn_stop
+            ).forEach { id ->
+                root.findViewById<View>(id)?.let { view ->
+                    view.isEnabled = enabled
+                    view.alpha = if (enabled) 1f else 0.4f
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun RemoteButtonRow(
-    left: Pair<String, TvRemoteAction>,
-    right: Pair<String, TvRemoteAction>,
-    enabled: Boolean,
-    onClick: (TvRemoteAction) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        RemoteButton(
-            title = left.first,
-            enabled = enabled,
-            modifier = Modifier.weight(1f),
-            onClick = { onClick(left.second) }
-        )
-        RemoteButton(
-            title = right.first,
-            enabled = enabled,
-            modifier = Modifier.weight(1f),
-            onClick = { onClick(right.second) }
-        )
-    }
-}
-
-@Composable
-private fun RemoteButton(
-    title: String,
-    enabled: Boolean,
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
-    OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.height(48.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
-    ) {
-        Text(
-            text = title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
+    )
 }
 
 @Composable
@@ -602,63 +643,45 @@ private fun SettingsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_section_connection))
+            SettingsGroupTitle(stringResource(R.string.settings_home_group))
             SettingsGroup {
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_connection),
-                    subtitle = stringResource(R.string.settings_connection_notifications_subtitle),
+                    subtitle = stringResource(R.string.settings_summary_connection),
                     value = boolSummary(prefs.getBoolean("auto_connect_on_launch", true)),
-                    leadingIcon = Icons.Default.Bluetooth,
                     onClick = { onNavigate(AppPage.SETTINGS_CONNECTION) }
                 )
-            }
-
-            SettingsGroupTitle(stringResource(R.string.settings_section_touchpad))
-            SettingsGroup {
+                SettingsDivider()
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_touchpad),
-                    subtitle = stringResource(R.string.settings_touchpad_sensitivity),
+                    subtitle = stringResource(R.string.settings_summary_touchpad),
                     value = prefs.getInt("touchpad_sensitivity", 5).toString(),
-                    leadingIcon = Icons.Default.Mouse,
                     onClick = { onNavigate(AppPage.SETTINGS_TOUCHPAD) }
                 )
-            }
-
-            SettingsGroupTitle(stringResource(R.string.settings_section_interaction))
-            SettingsGroup {
+                SettingsDivider()
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_interaction),
-                    subtitle = stringResource(R.string.settings_haptic_feedback_subtitle),
+                    subtitle = stringResource(R.string.settings_summary_interaction),
                     value = boolSummary(prefs.getBoolean("haptic_feedback", true)),
                     onClick = { onNavigate(AppPage.SETTINGS_INTERACTION) }
                 )
-            }
-
-            SettingsGroupTitle(stringResource(R.string.settings_section_appearance))
-            SettingsGroup {
+                SettingsDivider()
                 SettingsNavigationItem(
-                    title = stringResource(R.string.settings_theme_mode),
-                    subtitle = stringResource(R.string.home_settings_subtitle),
+                    title = stringResource(R.string.settings_section_appearance),
+                    subtitle = stringResource(R.string.settings_summary_appearance),
                     value = themeSummary,
-                    leadingIcon = Icons.Default.Settings,
                     onClick = { onNavigate(AppPage.SETTINGS_APPEARANCE) }
                 )
-            }
-
-            SettingsGroupTitle(stringResource(R.string.settings_section_data))
-            SettingsGroup {
+                SettingsDivider()
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_data),
-                    subtitle = stringResource(R.string.settings_reset_macros),
+                    subtitle = stringResource(R.string.settings_summary_data),
                     onClick = { onNavigate(AppPage.SETTINGS_DATA) }
                 )
-            }
-
-            SettingsGroupTitle(stringResource(R.string.settings_section_about))
-            SettingsGroup {
+                SettingsDivider()
                 SettingsNavigationItem(
                     title = stringResource(R.string.settings_section_about),
-                    subtitle = stringResource(R.string.settings_app_name_label),
+                    subtitle = stringResource(R.string.settings_summary_about),
                     value = versionName,
                     onClick = { onNavigate(AppPage.SETTINGS_ABOUT) }
                 )
@@ -686,16 +709,18 @@ private fun ConnectionSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_section_connection))
+            SettingsGroupTitle(stringResource(R.string.settings_group_connection_behavior))
             SettingsGroup {
                 SettingsSwitchItem(
                     title = stringResource(R.string.settings_auto_connect_launch),
+                    subtitle = stringResource(R.string.settings_auto_connect_launch_subtitle),
                     checked = autoConnect,
                     onCheckedChange = { autoConnect = it; saveBoolean(prefs, "auto_connect_on_launch", it, onBooleanSettingChanged) }
                 )
                 SettingsDivider()
                 SettingsSwitchItem(
                     title = stringResource(R.string.settings_auto_reconnect),
+                    subtitle = stringResource(R.string.settings_auto_reconnect_subtitle),
                     checked = autoReconnect,
                     onCheckedChange = { autoReconnect = it; saveBoolean(prefs, "auto_reconnect_on_disconnect", it, onBooleanSettingChanged) }
                 )
@@ -733,10 +758,11 @@ private fun TouchpadSettingsScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_section_touchpad))
+            SettingsGroupTitle(stringResource(R.string.settings_group_pointer_scroll))
             SettingsGroup {
                 SettingsSliderItem(
                     title = stringResource(R.string.settings_touchpad_sensitivity),
+                    subtitle = stringResource(R.string.settings_touchpad_sensitivity_subtitle),
                     value = sensitivity.toFloat(),
                     onValueChange = { value ->
                         sensitivity = value.toInt()
@@ -748,6 +774,7 @@ private fun TouchpadSettingsScreen(onBack: () -> Unit) {
                 SettingsDivider()
                 SettingsSliderItem(
                     title = stringResource(R.string.settings_cursor_speed),
+                    subtitle = stringResource(R.string.settings_cursor_speed_subtitle),
                     value = cursorSpeed.toFloat(),
                     onValueChange = { value ->
                         cursorSpeed = value.toInt()
@@ -759,6 +786,7 @@ private fun TouchpadSettingsScreen(onBack: () -> Unit) {
                 SettingsDivider()
                 SettingsSwitchItem(
                     title = stringResource(R.string.settings_scroll_direction_natural),
+                    subtitle = stringResource(R.string.settings_scroll_direction_natural_subtitle),
                     checked = naturalScroll,
                     onCheckedChange = {
                         naturalScroll = it
@@ -766,7 +794,6 @@ private fun TouchpadSettingsScreen(onBack: () -> Unit) {
                     }
                 )
             }
-            SettingsInfoText(stringResource(R.string.home_touchpad_subtitle))
         }
     }
 }
@@ -783,7 +810,7 @@ private fun InteractionSettingsScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_section_interaction))
+            SettingsGroupTitle(stringResource(R.string.settings_group_feedback))
             SettingsGroup {
                 SettingsSwitchItem(
                     title = stringResource(R.string.settings_haptic_feedback),
@@ -813,8 +840,7 @@ private fun DataSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsInfoText(stringResource(R.string.dialog_reset_macros_confirm))
-            SettingsGroupTitle(stringResource(R.string.settings_section_data))
+            SettingsGroupTitle(stringResource(R.string.settings_group_commands))
             SettingsGroup {
                 SettingsTextItem(
                     title = stringResource(R.string.settings_reset_macros),
@@ -868,7 +894,7 @@ private fun AppearanceSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_theme_mode))
+            SettingsGroupTitle(stringResource(R.string.settings_group_theme))
             SettingsGroup {
                 options.forEachIndexed { index, title ->
                     SettingsRadioItem(
@@ -899,7 +925,7 @@ private fun AboutSettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            SettingsGroupTitle(stringResource(R.string.settings_section_about))
+            SettingsGroupTitle(stringResource(R.string.settings_group_about))
             SettingsGroup {
                 SettingsItem(
                     title = stringResource(R.string.settings_app_name_label),
@@ -913,7 +939,7 @@ private fun AboutSettingsScreen(
                 SettingsDivider()
                 SettingsTextItem(
                     title = stringResource(R.string.settings_open_source),
-                    subtitle = stringResource(R.string.app_name)
+                    subtitle = stringResource(R.string.settings_about_license_subtitle)
                 )
             }
         }
@@ -963,5 +989,5 @@ private fun connectionStatusText(isConnected: Boolean, connectedDeviceName: Stri
 
 @Composable
 private fun boolSummary(value: Boolean): String {
-    return if (value) stringResource(R.string.status_connected_label) else stringResource(R.string.status_not_connected)
+    return if (value) stringResource(R.string.settings_state_on) else stringResource(R.string.settings_state_off)
 }

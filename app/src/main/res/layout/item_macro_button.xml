@@ -18,7 +18,7 @@
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="?attr/colorOnSurface"
         app:cornerRadius="12dp"
-        app:strokeColor="@color/outline_variant"
+        app:strokeColor="?attr/colorOutlineVariant"
         app:strokeWidth="1dp" />
 
     <TextView
