@@ -12,8 +12,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
+import com.google.android.material.shape.ShapeAppearanceModel
 import com.haoze.claudekeyboard.R
 
 class SettingsAdapter(
@@ -74,6 +76,7 @@ class SettingsAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        applyGroupedCardShape(holder, position)
         when (val item = getItem(position)) {
             is SettingsItem.SectionHeader -> (holder as HeaderViewHolder).bind(item)
             is SettingsItem.SwitchItem -> (holder as SwitchViewHolder).bind(item)
@@ -82,6 +85,22 @@ class SettingsAdapter(
             is SettingsItem.ToggleGroupItem -> (holder as ToggleGroupViewHolder).bind(item)
             is SettingsItem.InfoItem -> (holder as InfoViewHolder).bind(item)
         }
+    }
+
+    private fun applyGroupedCardShape(holder: RecyclerView.ViewHolder, position: Int) {
+        val card = holder.itemView as? MaterialCardView ?: return
+        val previous = if (position > 0) getItem(position - 1) else null
+        val next = if (position < itemCount - 1) getItem(position + 1) else null
+        val isFirst = previous == null || previous is SettingsItem.SectionHeader
+        val isLast = next == null || next is SettingsItem.SectionHeader
+        val radius = card.resources.displayMetrics.density * 12f
+
+        card.shapeAppearanceModel = ShapeAppearanceModel.builder()
+            .setTopLeftCornerSize(if (isFirst) radius else 0f)
+            .setTopRightCornerSize(if (isFirst) radius else 0f)
+            .setBottomLeftCornerSize(if (isLast) radius else 0f)
+            .setBottomRightCornerSize(if (isLast) radius else 0f)
+            .build()
     }
 
     inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -111,6 +130,9 @@ class SettingsAdapter(
             switch.setOnCheckedChangeListener { _, isChecked ->
                 prefs.edit().putBoolean(item.key, isChecked).apply()
                 onSwitchChanged(item.key, isChecked)
+            }
+            itemView.setOnClickListener {
+                switch.isChecked = !switch.isChecked
             }
         }
     }
@@ -165,9 +187,11 @@ class SettingsAdapter(
     }
 
     inner class ToggleGroupViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvTitle: TextView = itemView.findViewById(R.id.tv_toggle_title)
         private val toggleGroup: MaterialButtonToggleGroup = itemView.findViewById(R.id.toggle_group)
 
         fun bind(item: SettingsItem.ToggleGroupItem) {
+            tvTitle.text = item.title
             toggleGroup.removeAllViews()
             toggleGroup.clearOnButtonCheckedListeners()
 

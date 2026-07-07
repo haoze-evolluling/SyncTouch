@@ -3,10 +3,9 @@
     android:id="@+id/tv_section_header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginTop="20dp"
+    android:layout_marginHorizontal="32dp"
+    android:layout_marginTop="24dp"
     android:layout_marginBottom="8dp"
     android:paddingVertical="4dp"
-    android:textAppearance="?attr/textAppearanceLabelLarge"
-    android:textColor="?attr/colorPrimary"
-    android:textStyle="bold" />
+    android:textAppearance="?attr/textAppearanceTitleSmall"
+    android:textColor="?attr/colorOnSurfaceVariant" />

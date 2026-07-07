@@ -22,6 +22,8 @@
     <color name="on_error_container">#FFB4AB</color>
 
     <color name="surface">#121318</color>
+    <color name="surface_container">#1E1F25</color>
+    <color name="surface_container_low">#191A20</color>
     <color name="on_surface">#E3E2E7</color>
     <color name="on_surface_variant">#C4C6D0</color>
     <color name="surface_variant">#44464F</color>

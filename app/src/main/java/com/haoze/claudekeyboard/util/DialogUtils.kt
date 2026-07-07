@@ -32,7 +32,7 @@ fun Dialog.fixM3Background() {
 
     val drawable = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
-        setColor(ContextCompat.getColor(context, R.color.home_card))
+        setColor(ContextCompat.getColor(context, R.color.surface_container))
         this.cornerRadius = cornerRadius
     }
     window.decorView.background = drawable

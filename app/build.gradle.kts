@@ -14,8 +14,8 @@ android {
         applicationId = "com.haoze.claudekeyboard"
         minSdk = 28
         targetSdk = 36
-        versionCode = 10000
-        versionName = "1.0"
+        versionCode = 11000
+        versionName = "1.10-R"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
