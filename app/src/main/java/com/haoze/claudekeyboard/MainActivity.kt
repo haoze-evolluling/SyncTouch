@@ -2,48 +2,42 @@ package com.haoze.claudekeyboard
 
 import android.Manifest
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageButton
-import android.widget.TextView
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.ContextCompat
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.haoze.claudekeyboard.bluetooth.BluetoothViewModel
 import com.haoze.claudekeyboard.bluetooth.KeyboardSender
 import com.haoze.claudekeyboard.macro.Macro
 import com.haoze.claudekeyboard.macro.MacroRepository
+import com.haoze.claudekeyboard.ui.compose.AppPage
+import com.haoze.claudekeyboard.ui.compose.CoreCommand
+import com.haoze.claudekeyboard.ui.compose.SyncTouchApp
+import com.haoze.claudekeyboard.ui.compose.SyncTouchTheme
+import com.haoze.claudekeyboard.ui.compose.TvRemoteAction
 import com.haoze.claudekeyboard.ui.device.DeviceListBottomSheetFragment
-import com.haoze.claudekeyboard.ui.home.HomeAdapter
-import com.haoze.claudekeyboard.ui.home.HomeItem
 import com.haoze.claudekeyboard.ui.keyboard.KeyboardFragment
-import com.haoze.claudekeyboard.ui.macro.MacroButtonAdapter
 import com.haoze.claudekeyboard.ui.macro.MacroEditDialogFragment
-import com.haoze.claudekeyboard.ui.settings.SettingsAdapter
-import com.haoze.claudekeyboard.ui.settings.SettingsItem
-import android.view.animation.AccelerateDecelerateInterpolator
 import com.haoze.claudekeyboard.ui.touchpad.TouchpadFragment
-import com.haoze.claudekeyboard.ui.tvremote.TvRemoteFragment
 import com.haoze.claudekeyboard.util.fixM3Background
-import com.haoze.claudekeyboard.util.performKeyClick
 
 class MainActivity : AppCompatActivity() {
 
@@ -52,35 +46,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val bluetoothViewModel: BluetoothViewModel by viewModels()
-
     private lateinit var macroRepository: MacroRepository
 
-    // UI components
-    private lateinit var btnYes: MaterialButton
-    private lateinit var btnNo: MaterialButton
-    private lateinit var btnCtrlC: MaterialButton
-    private lateinit var btnYesToAll: MaterialButton
-    private lateinit var btnBackspace: MaterialButton
-    private lateinit var btnEnter: MaterialButton
-    private lateinit var macroRecyclerView: RecyclerView
-    private lateinit var macroAdapter: MacroButtonAdapter
-    private lateinit var btnSettings: ImageButton
-    private lateinit var tvAgentStatus: TextView
-    private lateinit var tvHomeStatus: TextView
-    private var deviceListDialog: DeviceListBottomSheetFragment? = null
-
-    // Navigation
-    private lateinit var contentHome: View
-    private lateinit var contentAgent: View
+    private lateinit var contentCompose: View
     private lateinit var contentKeyboard: View
     private lateinit var contentTouchpad: View
-    private lateinit var contentSettings: View
-    private val allContentViews by lazy { listOf(contentHome, contentAgent, contentKeyboard, contentTouchpad, contentTvRemote, contentSettings) }
+    private val allContentViews by lazy { listOf(contentCompose, contentKeyboard, contentTouchpad) }
+
     private var keyboardFragment: KeyboardFragment? = null
     private var touchpadFragment: TouchpadFragment? = null
-    private lateinit var contentTvRemote: View
-    private var tvRemoteFragment: TvRemoteFragment? = null
-    private lateinit var homeAdapter: HomeAdapter
+    private var deviceListDialog: DeviceListBottomSheetFragment? = null
+
+    private var currentPage by mutableStateOf(AppPage.HOME)
+    private var isConnectedState by mutableStateOf(false)
+    private var connectedDeviceNameState by mutableStateOf<String?>(null)
+    private var macrosState by mutableStateOf<List<Macro>>(emptyList())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
@@ -92,44 +72,39 @@ class MainActivity : AppCompatActivity() {
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         )
+
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // Check Bluetooth support
         if (!bluetoothViewModel.hasBluetoothSupport()) {
             Toast.makeText(this, R.string.toast_bluetooth_not_supported, Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
-        // Check and request permissions
         val missing = getMissingPermissions()
         if (missing.isNotEmpty()) {
             requestPermissions(missing, REQUEST_CODE_PERMISSIONS)
-            // Don't start Bluetooth service yet — permissions not granted.
-            // Service will be started in onRequestPermissionsResult on success.
         } else {
-            // Permissions already granted, safe to start service
             bluetoothViewModel.startAndBindService()
         }
 
         macroRepository = MacroRepository(this)
         initViews()
         setupWindowInsets()
-        setupHomePage()
-        setupSettingsPage()
-        setupCoreButtons()
-        setupMacroRecyclerView()
+        setupComposeContent()
+        loadMacros()
         observeViewModel()
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (contentHome.visibility != View.VISIBLE) {
-                    navigateToHome()
-                } else {
-                    finish()
+                when {
+                    contentCompose.visibility != View.VISIBLE -> navigateToHome()
+                    currentPage.isSettingsDetail() -> navigateToPortrait(AppPage.SETTINGS)
+                    currentPage != AppPage.HOME -> navigateToHome()
+                    else -> finish()
                 }
             }
         })
@@ -145,7 +120,6 @@ class MainActivity : AppCompatActivity() {
             if (grantResults.isEmpty() || grantResults.any { it != PackageManager.PERMISSION_GRANTED }) {
                 Toast.makeText(this, R.string.toast_permission_denied, Toast.LENGTH_SHORT).show()
             } else {
-                // Permissions granted — safe to start Bluetooth service now
                 bluetoothViewModel.startAndBindService()
             }
         }
@@ -155,39 +129,46 @@ class MainActivity : AppCompatActivity() {
         val required = mutableListOf<String>()
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)
+                if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                     required.add(Manifest.permission.BLUETOOTH_CONNECT)
-                if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED)
+                }
+                if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
                     required.add(Manifest.permission.BLUETOOTH_ADVERTISE)
+                }
             }
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
-                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     required.add(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
             }
             else -> {
-                if (checkSelfPermission(Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED)
+                if (checkSelfPermission(Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
                     required.add(Manifest.permission.BLUETOOTH)
-                if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED)
+                }
+                if (checkSelfPermission(Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED) {
                     required.add(Manifest.permission.BLUETOOTH_ADMIN)
+                }
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
-                required.add(Manifest.permission.POST_NOTIFICATIONS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            required.add(Manifest.permission.POST_NOTIFICATIONS)
         }
         return required.toTypedArray()
     }
 
-    /**
-     * Handle display cutout (front camera) + system bars.
-     */
+    private fun initViews() {
+        contentCompose = findViewById(R.id.content_compose)
+        contentKeyboard = findViewById(R.id.content_keyboard)
+        contentTouchpad = findViewById(R.id.content_touchpad)
+    }
+
     private fun setupWindowInsets() {
         val mainView = findViewById<View>(R.id.main)
         ViewCompat.setOnApplyWindowInsetsListener(mainView) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val cutout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                insets.displayCutout
-            } else null
+            val cutout = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) insets.displayCutout else null
 
             val left = maxOf(systemBars.left, cutout?.safeInsetLeft ?: 0)
             val top = maxOf(systemBars.top, cutout?.safeInsetTop ?: 0)
@@ -197,99 +178,68 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initViews() {
-        btnYes = findViewById(R.id.btn_yes)
-        btnNo = findViewById(R.id.btn_no)
-        btnCtrlC = findViewById(R.id.btn_ctrl_c)
-        btnYesToAll = findViewById(R.id.btn_yes_to_all)
-        btnBackspace = findViewById(R.id.btn_backspace)
-        btnEnter = findViewById(R.id.btn_enter)
-        macroRecyclerView = findViewById(R.id.rv_macros)
-        contentHome = findViewById(R.id.content_home)
-        contentAgent = findViewById(R.id.content_agent)
-        contentKeyboard = findViewById(R.id.content_keyboard)
-        contentTouchpad = findViewById(R.id.content_touchpad)
-        contentSettings = findViewById(R.id.content_settings)
-        contentTvRemote = findViewById(R.id.content_tvremote)
-        tvAgentStatus = findViewById(R.id.tv_agent_status)
-        tvHomeStatus = findViewById(R.id.tv_home_status)
-        btnSettings = findViewById(R.id.btn_settings)
-        btnSettings.setOnClickListener {
-            it.performKeyClick()
-            navigateToPage(contentSettings, landscape = false)
-        }
-        findViewById<ImageButton>(R.id.btn_back_agent).setOnClickListener {
-            it.performKeyClick()
-            navigateToHome()
-        }
-        findViewById<ImageButton>(R.id.btn_home_settings).setOnClickListener {
-            it.performKeyClick()
-            navigateToPage(contentSettings, landscape = false)
-        }
-        findViewById<View>(R.id.card_home_status).setOnClickListener {
-            it.performKeyClick()
-            showDeviceListDialog()
-        }
-    }
-
-    private fun setupHomePage() {
-        val rvHome = findViewById<RecyclerView>(R.id.rv_home)
-        homeAdapter = HomeAdapter { entry ->
-            when (entry.id) {
-                "keyboard" -> navigateToPage(contentKeyboard, landscape = true)
-                "touchpad" -> navigateToPage(contentTouchpad, landscape = true)
-                "tvremote" -> navigateToPage(contentTvRemote, landscape = false)
-                "agent" -> navigateToPage(contentAgent, landscape = false)
-                "settings" -> navigateToPage(contentSettings, landscape = false)
+    private fun setupComposeContent() {
+        findViewById<ComposeView>(R.id.content_compose).setContent {
+            SyncTouchTheme {
+                SyncTouchApp(
+                    page = currentPage,
+                    isConnected = isConnectedState,
+                    connectedDeviceName = connectedDeviceNameState,
+                    versionName = getVersionName(),
+                    macros = macrosState,
+                    onNavigate = ::navigateToPortrait,
+                    onNavigateHome = ::navigateToHome,
+                    onOpenKeyboard = { navigateToPage(contentKeyboard, landscape = true) },
+                    onOpenTouchpad = { navigateToPage(contentTouchpad, landscape = true) },
+                    onShowDeviceList = ::showDeviceListDialog,
+                    onCoreCommand = ::sendCoreCommand,
+                    onMacroClick = ::sendMacro,
+                    onMacroLongClick = ::showEditMacroDialog,
+                    onAddMacro = ::showAddMacroDialog,
+                    onResetMacros = {
+                        macroRepository.resetToDefaults()
+                        loadMacros()
+                    },
+                    onBooleanSettingChanged = ::onBooleanSettingChanged,
+                    onThemeModeChanged = ::applyThemeMode,
+                    onTvRemoteAction = ::sendTvRemoteAction
+                )
             }
         }
-        rvHome.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = homeAdapter
-        }
-        loadHomeItems()
     }
 
-    private fun loadHomeItems() {
-        val items = listOf(
-            HomeItem.Section(getString(R.string.home_functions)),
-            HomeItem.Entry(
-                id = "keyboard",
-                title = getString(R.string.home_keyboard_title),
-                subtitle = getString(R.string.home_keyboard_subtitle),
-                iconRes = R.drawable.baseline_keyboard_24,
-                iconBackgroundRes = R.drawable.bg_home_icon_keyboard
-            ),
-            HomeItem.Entry(
-                id = "touchpad",
-                title = getString(R.string.home_touchpad_title),
-                subtitle = getString(R.string.home_touchpad_subtitle),
-                iconRes = R.drawable.baseline_mouse_24,
-                iconBackgroundRes = R.drawable.bg_home_icon_touchpad
-            ),
-            HomeItem.Entry(
-                id = "tvremote",
-                title = getString(R.string.home_tvremote_title),
-                subtitle = getString(R.string.home_tvremote_subtitle),
-                iconRes = R.drawable.baseline_settings_remote_24,
-                iconBackgroundRes = R.drawable.bg_home_icon_tvremote
-            ),
-            HomeItem.Entry(
-                id = "agent",
-                title = getString(R.string.home_agent_title),
-                subtitle = getString(R.string.home_agent_subtitle),
-                iconRes = R.drawable.baseline_terminal_24,
-                iconBackgroundRes = R.drawable.bg_home_icon_agent
-            ),
-            HomeItem.Entry(
-                id = "settings",
-                title = getString(R.string.home_settings_title),
-                subtitle = getString(R.string.home_settings_subtitle),
-                iconRes = R.drawable.baseline_settings_24,
-                iconBackgroundRes = R.drawable.bg_home_icon_settings
-            )
-        )
-        homeAdapter.submitList(items)
+    private fun observeViewModel() {
+        bluetoothViewModel.connectionState.observe(this) { isConnected ->
+            val deviceName = bluetoothViewModel.connectedDeviceName.value
+            updateStatusUI(isConnected, deviceName)
+            updateKeepScreenOn(isConnected)
+            if (isConnected) {
+                deviceListDialog?.onConnectionSuccess()
+                deviceListDialog = null
+            }
+        }
+
+        bluetoothViewModel.connectedDeviceName.observe(this) {
+            updateStatusUI(bluetoothViewModel.isConnected(), it)
+        }
+
+        bluetoothViewModel.registrationState.observe(this) { isRegistered ->
+            if (!isRegistered) {
+                Toast.makeText(this, R.string.toast_bluetooth_not_supported, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        bluetoothViewModel.keyboardSender.observe(this) {
+            updateFragmentEnabledStates()
+        }
+
+        bluetoothViewModel.mouseSender.observe(this) {
+            updateFragmentEnabledStates()
+        }
+
+        bluetoothViewModel.sendError.observe(this) { message ->
+            Toast.makeText(this, getString(R.string.toast_send_error, message), Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun showOnly(target: View, animate: Boolean = true) {
@@ -346,30 +296,19 @@ class MainActivity : AppCompatActivity() {
             touchpadFragment = supportFragmentManager.findFragmentById(R.id.touchpad_fragment_container) as? TouchpadFragment
             touchpadFragment?.reloadSettings()
             updateFragmentEnabledStates()
-        } else if (targetContent == contentTvRemote) {
-            tvRemoteFragment = supportFragmentManager.findFragmentById(R.id.tvremote_fragment_container) as? TvRemoteFragment
-            updateFragmentEnabledStates()
         }
     }
 
-    fun navigateToHome() {
-        val currentOrientation = resources.configuration.orientation
-        val sameOrientation = currentOrientation == Configuration.ORIENTATION_PORTRAIT
-
-        showOnly(contentHome, animate = sameOrientation)
+    private fun navigateToPortrait(page: AppPage) {
+        currentPage = page
+        val sameOrientation = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+        showOnly(contentCompose, animate = sameOrientation)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        updateDeviceSubtitle()
         updateKeepScreenOn(bluetoothViewModel.isConnected())
     }
 
-    private fun updateDeviceSubtitle() {
-        val isConnected = bluetoothViewModel.isConnected()
-        val deviceName = bluetoothViewModel.getConnectedDeviceName()
-        tvHomeStatus.text = if (isConnected && deviceName != null) {
-            getString(R.string.device_name_status, deviceName, getString(R.string.status_connected_label))
-        } else {
-            getString(R.string.status_not_connected)
-        }
+    fun navigateToHome() {
+        navigateToPortrait(AppPage.HOME)
     }
 
     fun switchToTouchpadTab() {
@@ -380,59 +319,16 @@ class MainActivity : AppCompatActivity() {
         navigateToPage(contentKeyboard, landscape = true)
     }
 
-    /**
-     * Observe ViewModel LiveData for connection state changes.
-     */
-    private fun observeViewModel() {
-        bluetoothViewModel.connectionState.observe(this) { isConnected ->
-            val deviceName = bluetoothViewModel.connectedDeviceName.value
-            updateStatusUI(isConnected, deviceName)
-            updateKeepScreenOn(isConnected)
-            if (isConnected) {
-                deviceListDialog?.onConnectionSuccess()
-                deviceListDialog = null
-            }
-        }
-
-        bluetoothViewModel.connectedDeviceName.observe(this) {
-            updateDeviceSubtitle()
-            val isConnected = bluetoothViewModel.isConnected()
-            updateStatusUI(isConnected, it)
-        }
-
-        bluetoothViewModel.registrationState.observe(this) { isRegistered ->
-            if (!isRegistered) {
-                Toast.makeText(this, R.string.toast_bluetooth_not_supported, Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        bluetoothViewModel.keyboardSender.observe(this) {
-            updateFragmentEnabledStates()
-        }
-
-        bluetoothViewModel.mouseSender.observe(this) {
-            updateFragmentEnabledStates()
-        }
-
-        bluetoothViewModel.tvRemoteSender.observe(this) {
-            updateFragmentEnabledStates()
-        }
-
-        // Show a brief toast when a HID report fails to send, so the user
-        // knows their input was not delivered to the host.
-        bluetoothViewModel.sendError.observe(this) { message ->
-            Toast.makeText(this, getString(R.string.toast_send_error, message), Toast.LENGTH_SHORT).show()
-        }
+    private fun updateStatusUI(isConnected: Boolean, deviceName: String?) {
+        isConnectedState = isConnected
+        connectedDeviceNameState = deviceName
+        updateFragmentEnabledStates()
     }
 
-    /**
-     * Update fragment enabled states based on connection.
-     */
     private fun updateFragmentEnabledStates() {
         val connected = bluetoothViewModel.isConnected()
         keyboardFragment?.setKeyboardEnabled(connected)
         touchpadFragment?.setTouchpadEnabled(connected)
-        tvRemoteFragment?.setTvRemoteEnabled(connected)
     }
 
     private fun updateKeepScreenOn(isConnected: Boolean) {
@@ -445,169 +341,82 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSettingsPage() {
-        val btnBack = findViewById<ImageButton>(R.id.btn_back_settings)
-        btnBack.setOnClickListener {
-            it.performKeyClick()
-            navigateToHome()
+    private fun onBooleanSettingChanged(key: String, value: Boolean) {
+        if (key == "connection_notifications" && !value) {
+            bluetoothViewModel.dismissConnectionNotification()
         }
+        if (key == "keep_screen_on") {
+            updateKeepScreenOn(bluetoothViewModel.isConnected())
+        }
+    }
 
-        val rvSettings = findViewById<RecyclerView>(R.id.rv_settings)
-
-        val prefs = getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
-
-        val adapter = SettingsAdapter(
-            prefs = prefs,
-            onToggleGroupChanged = { key, index ->
-                if (key == "theme_mode_index") {
-                    AppCompatDelegate.setDefaultNightMode(
-                        when (index) {
-                            1 -> AppCompatDelegate.MODE_NIGHT_NO
-                            2 -> AppCompatDelegate.MODE_NIGHT_YES
-                            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                        }
-                    )
-                    recreate()
-                }
-            },
-            onButtonClick = { item ->
-                when (item.title) {
-                    getString(R.string.settings_reset_macros) -> {
-                        val dlg = MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.settings_reset_macros)
-                            .setMessage(R.string.dialog_reset_macros_confirm)
-                            .setPositiveButton(R.string.dialog_reset) { _, _ ->
-                                macroRepository.resetToDefaults()
-                                loadMacros()
-                            }
-                            .setNegativeButton(R.string.dialog_cancel, null)
-                            .create()
-                        dlg.fixM3Background()
-                        dlg.show()
-                    }
-                }
-            },
-            onSwitchChanged = { key, value ->
-                if (key == "connection_notifications" && !value) {
-                    bluetoothViewModel.dismissConnectionNotification()
-                }
+    private fun applyThemeMode(index: Int) {
+        AppCompatDelegate.setDefaultNightMode(
+            when (index) {
+                1 -> AppCompatDelegate.MODE_NIGHT_NO
+                2 -> AppCompatDelegate.MODE_NIGHT_YES
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         )
-
-        rvSettings.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            this.adapter = adapter
-        }
-
-        val versionName = try {
-            val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
-            pInfo.versionName ?: "1.0.0"
-        } catch (e: Exception) {
-            "1.0.0"
-        }
-
-        val items = listOf(
-            SettingsItem.SectionHeader(getString(R.string.settings_section_connection)),
-            SettingsItem.SwitchItem("auto_connect_on_launch", getString(R.string.settings_auto_connect_launch), null, true),
-            SettingsItem.SwitchItem("auto_reconnect_on_disconnect", getString(R.string.settings_auto_reconnect), null, true),
-            SettingsItem.SwitchItem("keep_screen_on", getString(R.string.settings_keep_screen_on), getString(R.string.settings_keep_screen_on_subtitle), true),
-            SettingsItem.SwitchItem("connection_notifications", getString(R.string.settings_connection_notifications), getString(R.string.settings_connection_notifications_subtitle), true),
-            SettingsItem.SectionHeader(getString(R.string.settings_section_touchpad)),
-            SettingsItem.SliderItem("touchpad_sensitivity", getString(R.string.settings_touchpad_sensitivity), null, 5, 1f, 10f, 1f),
-            SettingsItem.SliderItem("cursor_speed", getString(R.string.settings_cursor_speed), null, 5, 1f, 10f, 1f),
-            SettingsItem.SwitchItem("scroll_direction_natural", getString(R.string.settings_scroll_direction_natural), null, false),
-            SettingsItem.SectionHeader(getString(R.string.settings_section_interaction)),
-            SettingsItem.SwitchItem("haptic_feedback", getString(R.string.settings_haptic_feedback), getString(R.string.settings_haptic_feedback_subtitle), true),
-            SettingsItem.SectionHeader(getString(R.string.settings_section_data)),
-            SettingsItem.ButtonItem(getString(R.string.settings_reset_macros)),
-            SettingsItem.SectionHeader(getString(R.string.settings_section_appearance)),
-            SettingsItem.ToggleGroupItem("theme_mode_index", getString(R.string.settings_theme_mode), listOf(getString(R.string.settings_theme_system), getString(R.string.settings_theme_light), getString(R.string.settings_theme_dark)), 0),
-            SettingsItem.SectionHeader(getString(R.string.settings_section_about)),
-            SettingsItem.InfoItem(getString(R.string.settings_app_name_label), getString(R.string.app_name)),
-            SettingsItem.InfoItem(getString(R.string.settings_version), versionName),
-            SettingsItem.InfoItem(getString(R.string.settings_open_source), "", onClick = {
-                // Placeholder for open source license
-            })
-        )
-        adapter.submitList(items)
+        recreate()
     }
 
-    private fun setupCoreButtons() {
-        setupCoreButton(btnYes) { it.sendText("y") }
-        setupCoreButton(btnNo) { it.sendText("n") }
-        setupCoreButton(btnCtrlC) { it.sendKeyPress(KeyboardSender.MODIFIER_CTRL_LEFT, KeyboardSender.KEY_C) }
-        setupCoreButton(btnYesToAll) { it.sendText("a") }
-        setupCoreButton(btnBackspace) { it.sendKeyPress(0x00, KeyboardSender.KEY_BACKSPACE) }
-        setupCoreButton(btnEnter) { it.sendKeyPress(0x00, KeyboardSender.KEY_ENTER) }
-    }
-
-    private fun setupCoreButton(button: MaterialButton, action: (KeyboardSender) -> Unit) {
-        button.setOnClickListener {
-            it.performKeyClick()
-            bluetoothViewModel.getKeyboardSenderDirect()?.let { s -> Thread { action(s) }.start() }
-        }
-    }
-
-    private fun setupMacroRecyclerView() {
-        macroAdapter = MacroButtonAdapter(
-            onMacroClick = { macro ->
-                if (macro.id == "add_custom") {
-                    showAddMacroDialog()
-                } else {
-                    bluetoothViewModel.getKeyboardSenderDirect()?.let { s ->
-                        Thread {
-                            if (macro.sendEnter) s.sendMacro(macro.command)
-                            else s.sendText(macro.command)
-                        }.start()
-                    }
-                }
-            },
-            onMacroLongClick = { macro ->
-                if (!macro.isPreset) showEditMacroDialog(macro)
+    private fun sendCoreCommand(command: CoreCommand) {
+        val sender = bluetoothViewModel.getKeyboardSenderDirect() ?: return
+        Thread {
+            when (command) {
+                CoreCommand.YES -> sender.sendText("y")
+                CoreCommand.YES_TO_ALL -> sender.sendText("a")
+                CoreCommand.NO -> sender.sendText("n")
+                CoreCommand.CTRL_C -> sender.sendKeyPress(KeyboardSender.MODIFIER_CTRL_LEFT, KeyboardSender.KEY_C)
+                CoreCommand.BACKSPACE -> sender.sendKeyPress(0x00, KeyboardSender.KEY_BACKSPACE)
+                CoreCommand.ENTER -> sender.sendKeyPress(0x00, KeyboardSender.KEY_ENTER)
             }
-        )
-        macroRecyclerView.apply {
-            layoutManager = GridLayoutManager(this@MainActivity, 2)
-            adapter = macroAdapter
+        }.start()
+    }
+
+    private fun sendMacro(macro: Macro) {
+        bluetoothViewModel.getKeyboardSenderDirect()?.let { sender ->
+            Thread {
+                if (macro.sendEnter) sender.sendMacro(macro.command) else sender.sendText(macro.command)
+            }.start()
         }
-        loadMacros()
+    }
+
+    private fun sendTvRemoteAction(action: TvRemoteAction) {
+        bluetoothViewModel.getTvRemoteSenderDirect()?.let { sender ->
+            when (action) {
+                TvRemoteAction.UP -> sender.sendUp()
+                TvRemoteAction.DOWN -> sender.sendDown()
+                TvRemoteAction.LEFT -> sender.sendLeft()
+                TvRemoteAction.RIGHT -> sender.sendRight()
+                TvRemoteAction.CONFIRM -> sender.sendConfirm()
+                TvRemoteAction.BACK -> sender.sendBack()
+                TvRemoteAction.ASSISTANT -> sender.sendAssistant()
+                TvRemoteAction.HOME -> sender.sendHome()
+                TvRemoteAction.MUTE -> sender.sendMute()
+                TvRemoteAction.VOLUME_UP -> sender.sendVolumeUp()
+                TvRemoteAction.VOLUME_DOWN -> sender.sendVolumeDown()
+                TvRemoteAction.POWER -> sender.sendPower()
+                TvRemoteAction.PLAY_PAUSE -> sender.sendPlayPause()
+                TvRemoteAction.NEXT -> sender.sendNext()
+                TvRemoteAction.PREVIOUS -> sender.sendPrevious()
+                TvRemoteAction.STOP -> sender.sendStop()
+            }
+        }
     }
 
     private fun loadMacros() {
-        val macros = macroRepository.getAllMacros().toMutableList()
-        macros.add(Macro(id = "add_custom", label = getString(R.string.btn_add_macro), command = "", isPreset = true, sortOrder = Int.MAX_VALUE))
-        macroAdapter.submitList(macros)
-    }
-
-    private fun updateStatusUI(isConnected: Boolean, deviceName: String?) {
-        if (isConnected) {
-            enableAllButtons()
-            tvAgentStatus.text = getString(R.string.device_name_status, deviceName ?: getString(R.string.status_unknown_device), getString(R.string.status_connected_label))
-            tvAgentStatus.setTextColor(ContextCompat.getColor(this, R.color.primary))
-        } else {
-            disableAllButtons()
-            tvAgentStatus.text = getString(R.string.status_not_connected)
-            tvAgentStatus.setTextColor(ContextCompat.getColor(this, R.color.on_surface_variant))
-        }
-        // Update fragment enabled states
-        updateFragmentEnabledStates()
-        updateDeviceSubtitle()
-    }
-
-    private fun enableAllButtons() {
-        btnYes.isEnabled = true; btnNo.isEnabled = true; btnCtrlC.isEnabled = true
-        btnYesToAll.isEnabled = true
-    }
-
-    private fun disableAllButtons() {
-        btnYes.isEnabled = false; btnNo.isEnabled = false; btnCtrlC.isEnabled = false
-        btnYesToAll.isEnabled = false
+        macrosState = macroRepository.getAllMacros()
     }
 
     private fun showEditMacroDialog(macro: Macro) {
         val dialog = MacroEditDialogFragment.newInstance(macro)
         dialog.setOnSaveListener { id, label, description, command, sendEnter ->
-            if (id != null) { macroRepository.updateCustomMacro(id, label, description, command, sendEnter); Toast.makeText(this, R.string.toast_macro_updated, Toast.LENGTH_SHORT).show() }
+            if (id != null) {
+                macroRepository.updateCustomMacro(id, label, description, command, sendEnter)
+                Toast.makeText(this, R.string.toast_macro_updated, Toast.LENGTH_SHORT).show()
+            }
             loadMacros()
         }
         dialog.setOnDeleteListener { id -> showDeleteConfirmationDialog(id) }
@@ -667,5 +476,25 @@ class MainActivity : AppCompatActivity() {
         })
         deviceListDialog = dialog
         dialog.show(supportFragmentManager, "device_list")
+    }
+
+    private fun getVersionName(): String {
+        return try {
+            val pInfo: PackageInfo = packageManager.getPackageInfo(packageName, 0)
+            pInfo.versionName ?: "1.0.0"
+        } catch (e: Exception) {
+            "1.0.0"
+        }
+    }
+
+    private fun AppPage.isSettingsDetail(): Boolean {
+        return this in setOf(
+            AppPage.SETTINGS_CONNECTION,
+            AppPage.SETTINGS_TOUCHPAD,
+            AppPage.SETTINGS_INTERACTION,
+            AppPage.SETTINGS_DATA,
+            AppPage.SETTINGS_APPEARANCE,
+            AppPage.SETTINGS_ABOUT
+        )
     }
 }
