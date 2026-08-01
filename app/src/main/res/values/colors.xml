@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Basic -->
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- M3 Color Roles - Light Mode (Monet-inspired indigo seed) -->
+    <color name="primary">#5F5DB5</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#E4E1FF</color>
+    <color name="on_primary_container">#1B1A5A</color>
+
+    <color name="secondary">#5E5E75</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#E3E1F9</color>
+    <color name="on_secondary_container">#1B1B2C</color>
+
+    <color name="tertiary">#79536B</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="tertiary_container">#FFD8EC</color>
+    <color name="on_tertiary_container">#301121</color>
+
+    <color name="error">#BA1A1A</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="error_container">#FFDAD6</color>
+    <color name="on_error_container">#410002</color>
+
+    <color name="surface">#FBF8FF</color>
+    <color name="surface_container">#F1EDF7</color>
+    <color name="surface_container_low">#F6F2FA</color>
+    <color name="on_surface">#1B1B21</color>
+    <color name="on_surface_variant">#62606A</color>
+    <color name="surface_variant">#E5E1EC</color>
+
+    <color name="outline">#7A7782</color>
+    <color name="outline_variant">#CBC7D2</color>
+
+    <!-- Home surfaces - 冷调净白 -->
+    <color name="home_background_start">#FAFAFB</color>
+    <color name="home_background_end">#EFF0F3</color>
+    <color name="home_hero_start">#4A7CFF</color>
+    <color name="home_hero_end">#8B72FF</color>
+    <color name="home_card">#FFFFFFFF</color>
+    <color name="home_card_stroke">#E6E8ED</color>
+    <color name="home_soft_panel">#F2F3F6</color>
+    <color name="home_on_hero">#FFFFFFFF</color>
+    <color name="home_on_hero_variant">#D9E5FA</color>
+    <color name="home_keyboard_accent">#315CFF</color>
+    <color name="home_touchpad_accent">#008C89</color>
+    <color name="home_agent_accent">#9A43E8</color>
+    <color name="home_settings_accent">#687386</color>
+    <color name="home_keyboard_icon_bg">#EBEDF3</color>
+    <color name="home_touchpad_icon_bg">#E6F3F0</color>
+    <color name="home_agent_icon_bg">#F5EEFC</color>
+    <color name="home_settings_icon_bg">#EFF0F3</color>
+    <color name="home_tvremote_icon_bg">#FDEAE7</color>
+    <color name="home_bluetooth_badge_bg">#DBE8FF</color>
+    <!-- (splash colors removed) -->
+
+    <!-- Button accent colors -->
+    <color name="positive_green">#2E7D32</color>
+</resources>
